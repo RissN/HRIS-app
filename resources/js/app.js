@@ -1,4 +1,4 @@
-import '../scss/custom.scss';
+import '../css/app.css';
 import './bootstrap';
 
 import { createInertiaApp } from '@inertiajs/vue3';

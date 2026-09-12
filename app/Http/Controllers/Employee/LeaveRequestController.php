@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
 use App\Models\LeaveRequest;
+use App\Models\Notification;
+use App\Models\User;
 use App\Services\AttendanceService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,7 +17,7 @@ class LeaveRequestController extends Controller
     public function index(Request $request): Response
     {
         $employee = $request->user()->employee;
-        if (!$employee) {
+        if (! $employee) {
             abort(403, 'Profil pegawai tidak ditemukan.');
         }
 
@@ -36,7 +38,7 @@ class LeaveRequestController extends Controller
     public function store(Request $request)
     {
         $employee = $request->user()->employee;
-        if (!$employee) {
+        if (! $employee) {
             return back()->with('error', 'Profil pegawai tidak ditemukan.');
         }
 
@@ -55,9 +57,9 @@ class LeaveRequestController extends Controller
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
             $file = $request->file('attachment');
-            $fileName = 'leave_' . $employee->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $fileName = 'leave_'.$employee->id.'_'.time().'.'.$file->getClientOriginalExtension();
             $path = $file->storeAs('attachments/leaves', $fileName, 'public');
-            $attachmentPath = '/storage/' . $path;
+            $attachmentPath = '/storage/'.$path;
         }
 
         LeaveRequest::create([
@@ -71,6 +73,19 @@ class LeaveRequestController extends Controller
             'status' => 'pending',
         ]);
 
+        // Notify Admins
+        $adminUsers = User::role('admin')->get();
+        foreach ($adminUsers as $admin) {
+            Notification::create([
+                'user_id' => $admin->id,
+                'title' => 'Pengajuan Cuti Baru',
+                'message' => "{$employee->user->name} mengajukan ".ucfirst(str_replace('_', ' ', $validated['type'])),
+                'type' => 'leave',
+                'link' => '/admin/leave-requests',
+                'is_read' => false,
+            ]);
+        }
+
         return redirect()->route('employee.leave-requests.index')
             ->with('success', 'Pengajuan cuti/izin/sakit berhasil dikirimkan dan menunggu peninjauan HR.');
     }
@@ -78,7 +93,7 @@ class LeaveRequestController extends Controller
     public function cancel(Request $request, LeaveRequest $leaveRequest)
     {
         $employee = $request->user()->employee;
-        if (!$employee || $leaveRequest->employee_id !== $employee->id) {
+        if (! $employee || $leaveRequest->employee_id !== $employee->id) {
             abort(403, 'Akses ditolak.');
         }
 

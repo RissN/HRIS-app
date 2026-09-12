@@ -1,15 +1,22 @@
 <?php
 
+use App\Http\Controllers\Admin\AnnouncementController as AdminAnnouncementController;
 use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController;
 use App\Http\Controllers\Admin\ComplaintController as AdminComplaintController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\EmployeeController as AdminEmployeeController;
+use App\Http\Controllers\Admin\HolidayController as AdminHolidayController;
 use App\Http\Controllers\Admin\LeaveRequestController as AdminLeaveRequestController;
+use App\Http\Controllers\Admin\PayrollController as AdminPayrollController;
+use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
+use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Employee\AttendanceController as EmployeeAttendanceController;
 use App\Http\Controllers\Employee\ComplaintController as EmployeeComplaintController;
 use App\Http\Controllers\Employee\LeaveRequestController as EmployeeLeaveRequestController;
+use App\Http\Controllers\Employee\PayrollController as EmployeePayrollController;
 use App\Http\Controllers\Employee\ProfileController as EmployeeProfileController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -20,8 +27,10 @@ Route::get('/', function () {
         if ($user->isAdmin()) {
             return redirect()->route('admin.dashboard');
         }
+
         return redirect()->route('employee.attendance');
     }
+
     return redirect()->route('login');
 });
 
@@ -31,6 +40,7 @@ Route::get('/dashboard', function () {
     if ($user && $user->isAdmin()) {
         return redirect()->route('admin.dashboard');
     }
+
     return redirect()->route('employee.attendance');
 })->middleware(['auth'])->name('dashboard');
 
@@ -61,6 +71,17 @@ Route::middleware(['auth'])->prefix('employee')->name('employee.')->group(functi
     Route::post('/profile/bank', [EmployeeProfileController::class, 'updateBank'])->name('profile.bank');
     Route::post('/profile/password', [EmployeeProfileController::class, 'updatePassword'])->name('profile.password');
     Route::post('/profile/avatar', [EmployeeProfileController::class, 'updateAvatar'])->name('profile.avatar');
+
+    // Payroll / Slip Gaji Pegawai
+    Route::get('/payroll', [EmployeePayrollController::class, 'index'])->name('payroll.index');
+});
+
+// ==========================================
+// NOTIFICATIONS ROUTES (All Authenticated Users)
+// ==========================================
+Route::middleware(['auth'])->group(function () {
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
 });
 
 // ==========================================
@@ -84,9 +105,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/schedules/{schedule}', [AdminScheduleController::class, 'update'])->name('schedules.update');
     Route::delete('/schedules/{schedule}', [AdminScheduleController::class, 'destroy'])->name('schedules.destroy');
 
-    // Attendance Management
+    // Attendance Management & Monitoring
     Route::get('/attendance', [AdminAttendanceController::class, 'index'])->name('attendance.index');
     Route::put('/attendance/{attendance}', [AdminAttendanceController::class, 'update'])->name('attendance.update');
+
+    // Reports & Export
+    Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/export', [AdminReportController::class, 'exportCsv'])->name('reports.export');
 
     // Leave Requests Management
     Route::get('/leave-requests', [AdminLeaveRequestController::class, 'index'])->name('leave-requests.index');
@@ -98,6 +123,26 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/complaints/{complaint}/status', [AdminComplaintController::class, 'updateStatus'])->name('complaints.status');
     Route::post('/complaints/{complaint}/resolve', [AdminComplaintController::class, 'resolve'])->name('complaints.resolve');
     Route::post('/complaints/{complaint}/reject', [AdminComplaintController::class, 'reject'])->name('complaints.reject');
+
+    // Announcements Management
+    Route::get('/announcements', [AdminAnnouncementController::class, 'index'])->name('announcements.index');
+    Route::post('/announcements', [AdminAnnouncementController::class, 'store'])->name('announcements.store');
+    Route::post('/announcements/{announcement}/toggle-status', [AdminAnnouncementController::class, 'toggleStatus'])->name('announcements.toggle-status');
+    Route::delete('/announcements/{announcement}', [AdminAnnouncementController::class, 'destroy'])->name('announcements.destroy');
+
+    // Holidays Calendar Management
+    Route::get('/holidays', [AdminHolidayController::class, 'index'])->name('holidays.index');
+    Route::post('/holidays', [AdminHolidayController::class, 'store'])->name('holidays.store');
+    Route::delete('/holidays/{holiday}', [AdminHolidayController::class, 'destroy'])->name('holidays.destroy');
+
+    // Payroll Estimator & Management
+    Route::get('/payroll', [AdminPayrollController::class, 'index'])->name('payroll.index');
+    Route::post('/payroll/generate', [AdminPayrollController::class, 'generate'])->name('payroll.generate');
+    Route::post('/payroll/{payroll}/paid', [AdminPayrollController::class, 'markAsPaid'])->name('payroll.paid');
+
+    // Office Geofencing & Rates Settings
+    Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [AdminSettingController::class, 'update'])->name('settings.update');
 });
 
 require __DIR__.'/auth.php';

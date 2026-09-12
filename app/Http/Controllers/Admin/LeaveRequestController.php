@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
+use App\Models\Notification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -80,7 +81,7 @@ class LeaveRequestController extends Controller
         $end = Carbon::parse($leaveRequest->end_date);
 
         while ($current->lte($end)) {
-            if (!$current->isWeekend()) {
+            if (! $current->isWeekend()) {
                 Attendance::updateOrCreate(
                     [
                         'employee_id' => $leaveRequest->employee_id,
@@ -88,11 +89,23 @@ class LeaveRequestController extends Controller
                     ],
                     [
                         'status' => $attendanceStatus,
-                        'note' => 'Pengajuan ' . ucfirst(str_replace('_', ' ', $leaveRequest->type)) . ' disetujui: ' . $leaveRequest->reason,
+                        'note' => 'Pengajuan '.ucfirst(str_replace('_', ' ', $leaveRequest->type)).' disetujui: '.$leaveRequest->reason,
                     ]
                 );
             }
             $current->addDay();
+        }
+
+        // Notify employee
+        if ($leaveRequest->employee?->user) {
+            Notification::create([
+                'user_id' => $leaveRequest->employee->user->id,
+                'title' => 'Pengajuan Cuti Disetujui',
+                'message' => 'Permohonan cuti/izin Anda telah disetujui oleh tim HR.',
+                'type' => 'leave',
+                'link' => '/employee/leave-requests',
+                'is_read' => false,
+            ]);
         }
 
         return back()->with('success', 'Pengajuan cuti/izin/sakit berhasil disetujui dan data absensi telah disinkronkan.');
@@ -114,6 +127,18 @@ class LeaveRequestController extends Controller
             'reviewed_at' => now(),
             'reject_reason' => $validated['reject_reason'],
         ]);
+
+        // Notify employee
+        if ($leaveRequest->employee?->user) {
+            Notification::create([
+                'user_id' => $leaveRequest->employee->user->id,
+                'title' => 'Pengajuan Cuti Ditolak',
+                'message' => 'Permohonan cuti/izin Anda ditolak: '.$validated['reject_reason'],
+                'type' => 'leave',
+                'link' => '/employee/leave-requests',
+                'is_read' => false,
+            ]);
+        }
 
         return back()->with('success', 'Pengajuan cuti/izin/sakit telah ditolak dengan catatan.');
     }

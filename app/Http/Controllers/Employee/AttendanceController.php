@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
+use App\Models\Announcement;
 use App\Models\Attendance;
+use App\Models\Holiday;
+use App\Models\Setting;
 use App\Models\WorkSchedule;
 use App\Services\AttendanceService;
 use Carbon\Carbon;
@@ -20,7 +23,7 @@ class AttendanceController extends Controller
     public function index(Request $request): Response
     {
         $employee = $request->user()->employee;
-        if (!$employee) {
+        if (! $employee) {
             abort(403, 'Profil pegawai tidak ditemukan.');
         }
 
@@ -38,11 +41,26 @@ class AttendanceController extends Controller
             ->take(7)
             ->get();
 
+        // Announcements & Holidays
+        $announcements = Announcement::where('is_active', true)->latest()->take(3)->get();
+        $upcomingHolidays = Holiday::where('date', '>=', $today)
+            ->orderBy('date', 'asc')
+            ->take(3)
+            ->get();
+
         return Inertia::render('Employee/Attendance', [
             'employee' => $employee->load('user'),
             'schedule' => $currentSchedule,
             'todayAttendance' => $todayAttendance,
             'recentAttendances' => $recentAttendances,
+            'announcements' => $announcements,
+            'upcomingHolidays' => $upcomingHolidays,
+            'officeLocation' => [
+                'name' => Setting::get('office_name', 'Kantor Pusat Jakarta'),
+                'latitude' => (float) Setting::get('office_latitude', -6.2088),
+                'longitude' => (float) Setting::get('office_longitude', 106.8456),
+                'radius' => (int) Setting::get('office_radius', 150),
+            ],
             'serverTime' => now()->toISOString(),
         ]);
     }
@@ -53,7 +71,7 @@ class AttendanceController extends Controller
     public function checkIn(Request $request)
     {
         $employee = $request->user()->employee;
-        if (!$employee) {
+        if (! $employee) {
             return back()->with('error', 'Profil pegawai tidak ditemukan.');
         }
 
@@ -84,8 +102,9 @@ class AttendanceController extends Controller
         // Radius check for present
         if ($status === 'present') {
             $isWithinRadius = AttendanceService::isWithinOfficeRadius($lat, $lng, $distance);
-            if (!$isWithinRadius) {
-                return back()->with('error', "Lokasi Anda berada di luar radius kantor ({$distance}m dari kantor, batas maksimal 150m).");
+            $maxRadius = (int) Setting::get('office_radius', 150);
+            if (! $isWithinRadius) {
+                return back()->with('error', "Lokasi Anda berada di luar radius kantor ({$distance}m dari kantor, batas maksimal {$maxRadius}m).");
             }
 
             // Determine if present or late based on schedule
@@ -95,16 +114,16 @@ class AttendanceController extends Controller
 
         // Save selfie photo if provided
         $photoPath = null;
-        if (!empty($validated['photo']) && str_contains($validated['photo'], 'data:image')) {
+        if (! empty($validated['photo']) && str_contains($validated['photo'], 'data:image')) {
             $imageData = $validated['photo'];
             $imageParts = explode(';base64,', $imageData);
             $imageTypeAux = explode('image/', $imageParts[0]);
             $imageType = $imageTypeAux[1] ?? 'jpg';
             $imageBase64 = base64_decode($imageParts[1]);
 
-            $fileName = 'selfies/' . $employee->id . '_' . time() . '.' . $imageType;
+            $fileName = 'selfies/'.$employee->id.'_'.time().'.'.$imageType;
             Storage::disk('public')->put($fileName, $imageBase64);
-            $photoPath = '/storage/' . $fileName;
+            $photoPath = '/storage/'.$fileName;
         }
 
         Attendance::updateOrCreate(
@@ -131,7 +150,7 @@ class AttendanceController extends Controller
     public function checkOut(Request $request)
     {
         $employee = $request->user()->employee;
-        if (!$employee) {
+        if (! $employee) {
             return back()->with('error', 'Profil pegawai tidak ditemukan.');
         }
 
@@ -140,7 +159,7 @@ class AttendanceController extends Controller
             ->where('date', $today)
             ->first();
 
-        if (!$attendance || !$attendance->check_in_at) {
+        if (! $attendance || ! $attendance->check_in_at) {
             return back()->with('error', 'Anda belum melakukan check-in hari ini.');
         }
 
@@ -161,14 +180,14 @@ class AttendanceController extends Controller
         if (in_array($attendance->status, ['present', 'late'])) {
             $distance = 0.0;
             $isWithinRadius = AttendanceService::isWithinOfficeRadius($lat, $lng, $distance);
-            if (!$isWithinRadius) {
+            if (! $isWithinRadius) {
                 return back()->with('error', "Lokasi check-out di luar radius kantor ({$distance}m dari kantor).");
             }
         }
 
         $note = $attendance->note;
-        if (!empty($validated['note'])) {
-            $note = $note ? ($note . ' | Keluar: ' . $validated['note']) : ('Keluar: ' . $validated['note']);
+        if (! empty($validated['note'])) {
+            $note = $note ? ($note.' | Keluar: '.$validated['note']) : ('Keluar: '.$validated['note']);
         }
 
         $attendance->update([
@@ -187,7 +206,7 @@ class AttendanceController extends Controller
     public function history(Request $request): Response
     {
         $employee = $request->user()->employee;
-        if (!$employee) {
+        if (! $employee) {
             abort(403, 'Profil pegawai tidak ditemukan.');
         }
 

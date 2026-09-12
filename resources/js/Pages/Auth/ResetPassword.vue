@@ -25,6 +25,30 @@ const form = useForm({
 });
 
 const submit = () => {
+    form.clearErrors();
+    let hasError = false;
+
+    if (!form.email || !form.email.trim()) {
+        form.setError('email', 'Alamat email wajib diisi');
+        hasError = true;
+    }
+    if (!form.password) {
+        form.setError('password', 'Kata sandi baru wajib diisi');
+        hasError = true;
+    } else if (form.password.length < 8) {
+        form.setError('password', 'Kata sandi minimal 8 karakter');
+        hasError = true;
+    }
+    if (!form.password_confirmation) {
+        form.setError('password_confirmation', 'Konfirmasi kata sandi wajib diisi');
+        hasError = true;
+    } else if (form.password && form.password !== form.password_confirmation) {
+        form.setError('password_confirmation', 'Konfirmasi kata sandi tidak cocok');
+        hasError = true;
+    }
+
+    if (hasError) return;
+
     form.post(route('password.store'), {
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
@@ -35,7 +59,7 @@ const submit = () => {
     <GuestLayout>
         <Head title="Reset Password" />
 
-        <form @submit.prevent="submit">
+        <form novalidate @submit.prevent="submit">
             <div>
                 <InputLabel for="email" value="Email" />
 
@@ -44,7 +68,7 @@ const submit = () => {
                     type="email"
                     class="mt-1 block w-full"
                     v-model="form.email"
-                    required
+                    @input="form.clearErrors('email')"
                     autofocus
                     autocomplete="username"
                 />
@@ -60,7 +84,7 @@ const submit = () => {
                     type="password"
                     class="mt-1 block w-full"
                     v-model="form.password"
-                    required
+                    @input="form.clearErrors('password')"
                     autocomplete="new-password"
                 />
 
@@ -78,7 +102,7 @@ const submit = () => {
                     type="password"
                     class="mt-1 block w-full"
                     v-model="form.password_confirmation"
-                    required
+                    @input="form.clearErrors('password_confirmation')"
                     autocomplete="new-password"
                 />
 

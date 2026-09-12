@@ -17,6 +17,11 @@ const form = useForm({
 });
 
 const submit = () => {
+    form.clearErrors();
+    if (!form.email || !form.email.trim()) {
+        form.setError('email', 'Alamat email wajib diisi');
+        return;
+    }
     form.post(route('password.email'));
 };
 </script>
@@ -38,7 +43,7 @@ const submit = () => {
             {{ status }}
         </div>
 
-        <form @submit.prevent="submit">
+        <form novalidate @submit.prevent="submit">
             <div>
                 <InputLabel for="email" value="Email" />
 
@@ -47,7 +52,7 @@ const submit = () => {
                     type="email"
                     class="mt-1 block w-full"
                     v-model="form.email"
-                    required
+                    @input="form.clearErrors('email')"
                     autofocus
                     autocomplete="username"
                 />

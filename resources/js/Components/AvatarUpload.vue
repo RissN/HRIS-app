@@ -31,55 +31,49 @@ const handleFileChange = (e) => {
     previewUrl.value = URL.createObjectURL(file);
     form.post(route('employee.profile.avatar'), {
       preserveScroll: true,
-      onSuccess: () => {
-        // Success
-      },
     });
   }
 };
 </script>
 
 <template>
-  <div class="d-flex align-items-center gap-3">
-    <div class="position-relative">
+  <div class="flex items-center gap-4">
+    <div class="relative shrink-0">
       <img 
-        :src="previewUrl || currentAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userName) + '&background=6366f1&color=fff'" 
+        :src="previewUrl || currentAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userName) + '&background=2563eb&color=fff'" 
         alt="Profile Avatar" 
-        class="rounded-circle object-fit-cover border border-2 border-primary shadow"
-        style="width: 80px; height: 80px;"
+        class="w-20 h-20 rounded-full object-cover ring-4 ring-blue-50 shadow-sm"
       />
       <button 
         type="button" 
-        class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-1 shadow"
-        style="width: 28px; height: 28px;"
+        class="w-7 h-7 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center absolute bottom-0 right-0 shadow-md ring-2 ring-white transition-colors cursor-pointer"
         title="Ganti Foto"
         @click="triggerUpload"
       >
-        <i class="bi bi-camera-fill" style="font-size: 0.8rem;"></i>
+        <i class="bi bi-camera-fill text-xs"></i>
       </button>
       <input 
         ref="fileInput" 
         type="file" 
         accept="image/png, image/jpeg, image/jpg" 
-        class="d-none" 
+        class="hidden" 
         @change="handleFileChange"
       />
     </div>
 
     <div>
-      <h6 class="mb-1 text-white fw-bold">{{ userName }}</h6>
+      <h6 class="font-bold text-slate-900 text-base leading-tight mb-1">{{ userName }}</h6>
       <button 
         type="button" 
-        class="btn btn-outline-secondary btn-sm"
-        style="font-size: 0.78rem;"
+        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
         :disabled="form.processing"
         @click="triggerUpload"
       >
-        <span v-if="form.processing" class="spinner-border spinner-border-sm me-1"></span>
-        <i v-else class="bi bi-upload me-1"></i>
-        Unggah Foto Profil
+        <span v-if="form.processing" class="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></span>
+        <i v-else class="bi bi-upload text-xs"></i>
+        <span>Unggah Foto Profil</span>
       </button>
-      <div v-if="form.errors.avatar" class="text-danger small mt-1">
+      <div v-if="form.errors.avatar" class="text-rose-600 text-xs mt-1 font-medium">
         {{ form.errors.avatar }}
       </div>
     </div>

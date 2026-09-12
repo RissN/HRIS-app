@@ -35,7 +35,7 @@ const openDetail = (item) => {
 // Approve
 const approveForm = useForm({});
 const approveRequest = (item) => {
-  if (confirm(`Apakah Anda yakin ingin menyetujui pengajuan dari ${item.employee?.user?.name}? Data absensi otomatis disinkronkan.`)) {
+  if (confirm(`Apakah Anda yakin ingin menyetujui pengajuan cuti dari ${item.employee?.user?.name}? Data absensi akan otomatis disinkronkan.`)) {
     approveForm.post(route('admin.leave-requests.approve', item.id), {
       preserveScroll: true,
     });
@@ -57,6 +57,13 @@ const openReject = (item) => {
 
 const submitReject = () => {
   if (!rejectingItem.value) return;
+
+  rejectForm.clearErrors();
+  if (!rejectForm.reject_reason || !rejectForm.reject_reason.trim()) {
+    rejectForm.setError('reject_reason', 'Alasan penolakan wajib diisi secara jelas');
+    return;
+  }
+
   rejectForm.post(route('admin.leave-requests.reject', rejectingItem.value.id), {
     preserveScroll: true,
     onSuccess: () => {
@@ -77,142 +84,223 @@ const formatDate = (dateStr) => {
   <AdminLayout>
     <Head title="Manajemen Pengajuan Cuti & Izin" />
 
-    <div class="card border border-secondary border-opacity-25 shadow-sm p-3 p-md-4 rounded-4 mb-4">
-      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-3">
-        <div>
-          <h4 class="fw-bold text-white mb-1">Manajemen Pengajuan Cuti / Izin / Sakit</h4>
-          <p class="text-secondary small mb-0">Tinjau, setujui, atau tolak permohonan dispensasi kehadiran staf secara terpusat.</p>
-        </div>
-      </div>
-
-      <!-- Filter Bar -->
-      <div class="row g-2 pt-3 border-top border-secondary border-opacity-25">
-        <div class="col-12 col-sm-4 col-md-3">
-          <select v-model="status" class="form-select form-select-sm" @change="applyFilter">
-            <option value="all">Semua Status</option>
-            <option value="pending">Menunggu (Pending)</option>
-            <option value="approved">Disetujui</option>
-            <option value="rejected">Ditolak</option>
-          </select>
+    <div class="space-y-6">
+      <!-- Header & Filters Card -->
+      <div class="bg-white rounded-3xl border border-slate-100 p-5 sm:p-6 shadow-xs">
+        <div class="pb-4 mb-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Manajemen Pengajuan Cuti & Izin</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Tinjau, setujui, atau tolak permohonan cuti staf secara terpusat.</p>
+          </div>
+          <div class="text-xs text-slate-400 font-medium">
+            Total Pengajuan: <strong class="text-slate-800">{{ leaveRequests?.length || 0 }}</strong>
+          </div>
         </div>
 
-        <div class="col-12 col-sm-4 col-md-3">
-          <select v-model="type" class="form-select form-select-sm" @change="applyFilter">
-            <option value="all">Semua Jenis</option>
-            <option value="annual_leave">Cuti Tahunan</option>
-            <option value="sick">Sakit</option>
-            <option value="permission">Izin Pribadi</option>
-            <option value="emergency_leave">Cuti Darurat</option>
-          </select>
-        </div>
-
-        <div class="col-12 col-sm-4 col-md-3">
-          <select v-model="department" class="form-select form-select-sm" @change="applyFilter">
-            <option value="all">Semua Departemen</option>
-            <option v-for="d in departments" :key="d" :value="d">{{ d }}</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- Requests Table -->
-    <div class="card border border-secondary border-opacity-25 shadow-sm p-3 p-md-4 rounded-4">
-      <div v-if="leaveRequests && leaveRequests.length > 0" class="table-responsive">
-        <table class="table table-hover align-middle small mb-0">
-          <thead>
-            <tr class="text-secondary border-bottom border-secondary border-opacity-25">
-              <th>Pegawai</th>
-              <th>Jenis</th>
-              <th>Periode</th>
-              <th>Total Hari</th>
-              <th>Alasan</th>
-              <th>Status</th>
-              <th class="text-end">Aksi Tindakan</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in leaveRequests" :key="item.id" class="border-bottom border-secondary border-opacity-10">
-              <td>
-                <div class="fw-bold text-white">{{ item.employee?.user?.name }}</div>
-                <small class="text-secondary">{{ item.employee?.department }}</small>
-              </td>
-              <td><StatusBadge :status="item.type" /></td>
-              <td class="text-white">
-                {{ formatDate(item.start_date) }} - {{ formatDate(item.end_date) }}
-              </td>
-              <td class="text-primary fw-bold">{{ item.total_days }} Hari</td>
-              <td class="text-secondary text-truncate" style="max-width: 200px;">
-                {{ item.reason }}
-              </td>
-              <td><StatusBadge :status="item.status" /></td>
-              <td class="text-end">
-                <div class="d-inline-flex gap-2">
-                  <button type="button" class="btn btn-sm btn-outline-info py-1 px-2" style="font-size: 0.75rem;" @click="openDetail(item)">
-                    <i class="bi bi-eye"></i> Detail
-                  </button>
-
-                  <template v-if="item.status === 'pending'">
-                    <button type="button" class="btn btn-sm btn-success py-1 px-2" style="font-size: 0.75rem;" @click="approveRequest(item)">
-                      <i class="bi bi-check2"></i> Setujui
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger py-1 px-2" style="font-size: 0.75rem;" @click="openReject(item)">
-                      <i class="bi bi-x"></i> Tolak
-                    </button>
-                  </template>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div v-else class="text-center py-5 text-secondary">
-        Tidak ada data pengajuan cuti atau izin yang sesuai.
-      </div>
-    </div>
-
-    <!-- Reject Reason Modal -->
-    <div v-if="showRejectModal && rejectingItem" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65);" @click.self="showRejectModal = false">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border border-secondary border-opacity-25 shadow-lg">
-          <div class="modal-header border-bottom border-secondary border-opacity-25">
-            <h5 class="modal-title fs-6 fw-bold text-white d-flex align-items-center gap-2">
-              <i class="bi bi-x-circle text-danger"></i>
-              Tolak Pengajuan Cuti / Izin
-            </h5>
-            <button type="button" class="btn-close btn-close-white" @click="showRejectModal = false"></button>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Status</label>
+            <select 
+              v-model="status" 
+              class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" 
+              @change="applyFilter"
+            >
+              <option value="all">Semua Status</option>
+              <option value="pending">Menunggu (Pending)</option>
+              <option value="approved">Disetujui</option>
+              <option value="rejected">Ditolak</option>
+            </select>
           </div>
 
-          <form @submit.prevent="submitReject">
-            <div class="modal-body">
-              <div class="p-2 bg-dark rounded-2 mb-3 small text-white">
-                Pegawai: <strong>{{ rejectingItem.employee?.user?.name }}</strong> ({{ rejectingItem.total_days }} hari)
-              </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Kategori Cuti</label>
+            <select 
+              v-model="type" 
+              class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" 
+              @change="applyFilter"
+            >
+              <option value="all">Semua Kategori</option>
+              <option value="annual_leave">Cuti Tahunan</option>
+              <option value="sick">Sakit</option>
+              <option value="permission">Izin Pribadi</option>
+              <option value="emergency_leave">Cuti Darurat</option>
+            </select>
+          </div>
 
-              <div class="mb-3">
-                <label class="form-label small text-secondary fw-semibold">Alasan Penolakan (Wajib Diisi) *</label>
-                <textarea 
-                  v-model="rejectForm.reject_reason" 
-                  class="form-control form-control-sm" 
-                  rows="3" 
-                  placeholder="Jelaskan alasan mengapa pengajuan ini tidak disetujui..." 
-                  required
-                ></textarea>
-                <div v-if="rejectForm.errors.reject_reason" class="text-danger small mt-1">{{ rejectForm.errors.reject_reason }}</div>
-              </div>
-            </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Departemen</label>
+            <select 
+              v-model="department" 
+              class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" 
+              @change="applyFilter"
+            >
+              <option value="all">Semua Departemen</option>
+              <option v-for="d in departments" :key="d" :value="d">{{ d }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
-            <div class="modal-footer border-top border-secondary border-opacity-25 py-2">
-              <button type="button" class="btn btn-secondary btn-sm" @click="showRejectModal = false">Batal</button>
-              <button type="submit" class="btn btn-danger btn-sm px-3" :disabled="rejectForm.processing">
-                Konfirmasi Tolak
-              </button>
-            </div>
-          </form>
+      <!-- Requests Table Card -->
+      <div class="bg-white rounded-3xl border border-slate-100 shadow-xs overflow-hidden">
+        <div v-if="leaveRequests && leaveRequests.length > 0" class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-slate-50/60 border-b border-slate-100 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+                <th class="py-3 px-4">Pegawai</th>
+                <th class="py-3 px-4">Jenis</th>
+                <th class="py-3 px-4">Periode</th>
+                <th class="py-3 px-4">Durasi</th>
+                <th class="py-3 px-4">Alasan</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr v-for="item in leaveRequests" :key="item.id" class="hover:bg-slate-50/70 transition-colors">
+                <td class="py-3 px-4">
+                  <div class="font-bold text-slate-900 text-xs">{{ item.employee?.user?.name }}</div>
+                  <div class="text-[11px] text-slate-500">{{ item.employee?.department || '-' }}</div>
+                </td>
+                <td class="py-3 px-4 whitespace-nowrap">
+                  <StatusBadge :status="item.type" />
+                </td>
+                <td class="py-3 px-4 font-medium text-slate-700 whitespace-nowrap">
+                  {{ formatDate(item.start_date) }} &ndash; {{ formatDate(item.end_date) }}
+                </td>
+                <td class="py-3 px-4 font-bold text-blue-600 whitespace-nowrap">
+                  {{ item.total_days }} Hari
+                </td>
+                <td class="py-3 px-4 text-slate-600 max-w-xs truncate" :title="item.reason">
+                  {{ item.reason }}
+                </td>
+                <td class="py-3 px-4 whitespace-nowrap">
+                  <StatusBadge :status="item.status" />
+                </td>
+                <td class="py-3 px-4 text-right whitespace-nowrap">
+                  <div class="inline-flex gap-1.5">
+                    <button 
+                      type="button" 
+                      class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer" 
+                      @click="openDetail(item)"
+                    >
+                      <i class="bi bi-eye"></i>
+                      <span>Detail</span>
+                    </button>
+
+                    <template v-if="item.status === 'pending'">
+                      <button 
+                        type="button" 
+                        class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer shadow-xs" 
+                        @click="approveRequest(item)"
+                      >
+                        <i class="bi bi-check2"></i>
+                        <span>Setujui</span>
+                      </button>
+                      <button 
+                        type="button" 
+                        class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer shadow-xs" 
+                        @click="openReject(item)"
+                      >
+                        <i class="bi bi-x"></i>
+                        <span>Tolak</span>
+                      </button>
+                    </template>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-else class="text-center py-14 text-slate-400 text-xs">
+          <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+            <i class="bi bi-file-earmark-x text-xl"></i>
+          </div>
+          <p class="font-semibold text-slate-600">Tidak ada pengajuan cuti</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Semua permohonan staf telah diproses</p>
         </div>
       </div>
     </div>
 
-    <!-- Detail Modal -->
+    <!-- Centered Reject Reason Modal Window -->
+    <div 
+      v-if="showRejectModal && rejectingItem" 
+      class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+      @click.self="showRejectModal = false"
+    >
+      <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-lg w-full my-auto overflow-hidden animate-in fade-in zoom-in-95 flex flex-col">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-xs">
+              <i class="bi bi-x-circle text-lg"></i>
+            </div>
+            <div>
+              <h5 class="text-base font-bold text-slate-900">Tolak Permohonan Cuti</h5>
+              <p class="text-xs text-slate-400">Pengajuan #{{ rejectingItem.id }}</p>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            class="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
+            @click="showRejectModal = false"
+          >
+            <i class="bi bi-x-lg text-sm"></i>
+          </button>
+        </div>
+
+        <form novalidate @submit.prevent="submitReject">
+          <div class="p-6 space-y-4 text-xs text-slate-700">
+            <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+              <div>
+                <div class="font-bold text-slate-900">{{ rejectingItem.employee?.user?.name }}</div>
+                <div class="text-[11px] text-slate-500">{{ rejectingItem.employee?.position }} &bull; {{ rejectingItem.total_days }} Hari Kerja</div>
+              </div>
+              <StatusBadge :status="rejectingItem.type" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                Alasan Penolakan (Wajib Diisi) *
+              </label>
+              <textarea 
+                v-model="rejectForm.reject_reason" 
+                @input="rejectForm.clearErrors('reject_reason')"
+                :class="rejectForm.errors.reject_reason 
+                  ? 'border-rose-400 bg-rose-50/20 text-rose-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20' 
+                  : 'border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20'"
+                class="w-full px-3.5 py-2.5 text-xs rounded-xl border placeholder-slate-400 outline-none transition-all leading-relaxed" 
+                rows="4" 
+                placeholder="Jelaskan alasan mengapa permohonan ini ditolak secara jelas untuk pegawai..." 
+              ></textarea>
+              <div v-if="rejectForm.errors.reject_reason" class="flex items-center gap-1.5 text-rose-600 text-xs mt-1.5 font-medium animate-in fade-in slide-in-from-top-1">
+                <i class="bi bi-exclamation-circle-fill text-xs shrink-0"></i>
+                <span>{{ rejectForm.errors.reject_reason }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+            <button 
+              type="button" 
+              class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-200 text-xs font-semibold transition-colors cursor-pointer" 
+              @click="showRejectModal = false"
+            >
+              Batal
+            </button>
+            <button 
+              type="submit" 
+              class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5" 
+              :disabled="rejectForm.processing"
+            >
+              <i class="bi bi-x-circle"></i>
+              <span>Konfirmasi Tolak Permohonan</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Centered Detail Modal Window -->
     <LeaveRequestModal 
       :show="showDetailModal" 
       :request="selectedRequest" 

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Employee;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Complaint;
+use App\Models\Notification;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,7 +17,7 @@ class ComplaintController extends Controller
     public function index(Request $request): Response
     {
         $employee = $request->user()->employee;
-        if (!$employee) {
+        if (! $employee) {
             abort(403, 'Profil pegawai tidak ditemukan.');
         }
 
@@ -32,7 +34,7 @@ class ComplaintController extends Controller
     public function create(Request $request): Response
     {
         $employee = $request->user()->employee;
-        if (!$employee) {
+        if (! $employee) {
             abort(403, 'Profil pegawai tidak ditemukan.');
         }
 
@@ -53,7 +55,7 @@ class ComplaintController extends Controller
     public function store(Request $request)
     {
         $employee = $request->user()->employee;
-        if (!$employee) {
+        if (! $employee) {
             return back()->with('error', 'Profil pegawai tidak ditemukan.');
         }
 
@@ -68,9 +70,9 @@ class ComplaintController extends Controller
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
             $file = $request->file('attachment');
-            $fileName = 'complaint_' . $employee->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $fileName = 'complaint_'.$employee->id.'_'.time().'.'.$file->getClientOriginalExtension();
             $path = $file->storeAs('attachments/complaints', $fileName, 'public');
-            $attachmentPath = '/storage/' . $path;
+            $attachmentPath = '/storage/'.$path;
         }
 
         Complaint::create([
@@ -82,6 +84,19 @@ class ComplaintController extends Controller
             'attachment' => $attachmentPath,
             'status' => 'pending',
         ]);
+
+        // Notify Admins
+        $adminUsers = User::role('admin')->get();
+        foreach ($adminUsers as $admin) {
+            Notification::create([
+                'user_id' => $admin->id,
+                'title' => 'Komplain Presensi Baru',
+                'message' => "{$employee->user->name} mengajukan komplain presensi tanggal {$validated['date']}.",
+                'type' => 'complaint',
+                'link' => '/admin/complaints',
+                'is_read' => false,
+            ]);
+        }
 
         return redirect()->route('employee.complaints.index')
             ->with('success', 'Komplain absensi berhasil diajukan. Tim HR akan segera meninjaunya.');

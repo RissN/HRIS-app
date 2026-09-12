@@ -11,6 +11,11 @@ const form = useForm({
 });
 
 const submit = () => {
+    form.clearErrors();
+    if (!form.password) {
+        form.setError('password', 'Kata sandi wajib diisi');
+        return;
+    }
     form.post(route('password.confirm'), {
         onFinish: () => form.reset(),
     });
@@ -26,7 +31,7 @@ const submit = () => {
             password before continuing.
         </div>
 
-        <form @submit.prevent="submit">
+        <form novalidate @submit.prevent="submit">
             <div>
                 <InputLabel for="password" value="Password" />
                 <TextInput
@@ -34,7 +39,7 @@ const submit = () => {
                     type="password"
                     class="mt-1 block w-full"
                     v-model="form.password"
-                    required
+                    @input="form.clearErrors('password')"
                     autocomplete="current-password"
                     autofocus
                 />

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Complaint;
 use App\Models\Employee;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -86,9 +87,9 @@ class ComplaintController extends Controller
         ]);
 
         // If admin chose to correct attendance
-        if (!empty($validated['correct_attendance'])) {
+        if (! empty($validated['correct_attendance'])) {
             $attendance = $complaint->attendance;
-            if (!$attendance) {
+            if (! $attendance) {
                 $attendance = Attendance::firstOrCreate(
                     [
                         'employee_id' => $complaint->employee_id,
@@ -96,26 +97,38 @@ class ComplaintController extends Controller
                     ],
                     [
                         'status' => $validated['status'] ?? 'present',
-                        'note' => 'Koreksi dari komplain #' . $complaint->id,
+                        'note' => 'Koreksi dari komplain #'.$complaint->id,
                     ]
                 );
             }
 
             $updateData = [
-                'note' => ($attendance->note ? $attendance->note . ' | ' : '') . 'Koreksi: ' . $validated['admin_note'],
+                'note' => ($attendance->note ? $attendance->note.' | ' : '').'Koreksi: '.$validated['admin_note'],
             ];
 
-            if (!empty($validated['check_in_at'])) {
+            if (! empty($validated['check_in_at'])) {
                 $updateData['check_in_at'] = $validated['check_in_at'];
             }
-            if (!empty($validated['check_out_at'])) {
+            if (! empty($validated['check_out_at'])) {
                 $updateData['check_out_at'] = $validated['check_out_at'];
             }
-            if (!empty($validated['status'])) {
+            if (! empty($validated['status'])) {
                 $updateData['status'] = $validated['status'];
             }
 
             $attendance->update($updateData);
+        }
+
+        // Notify employee
+        if ($complaint->employee?->user) {
+            Notification::create([
+                'user_id' => $complaint->employee->user->id,
+                'title' => 'Komplain Presensi Diselesaikan',
+                'message' => 'Laporan koreksi presensi Anda telah diselesaikan: '.$validated['admin_note'],
+                'type' => 'complaint',
+                'link' => '/employee/complaints',
+                'is_read' => false,
+            ]);
         }
 
         return back()->with('success', 'Komplain absensi telah diselesaikan dan direspon.');
@@ -133,6 +146,18 @@ class ComplaintController extends Controller
             'resolved_by' => $request->user()->id,
             'resolved_at' => now(),
         ]);
+
+        // Notify employee
+        if ($complaint->employee?->user) {
+            Notification::create([
+                'user_id' => $complaint->employee->user->id,
+                'title' => 'Komplain Presensi Ditolak',
+                'message' => 'Laporan koreksi presensi Anda ditolak: '.$validated['admin_note'],
+                'type' => 'complaint',
+                'link' => '/employee/complaints',
+                'is_read' => false,
+            ]);
+        }
 
         return back()->with('success', 'Komplain absensi ditolak dengan alasan.');
     }

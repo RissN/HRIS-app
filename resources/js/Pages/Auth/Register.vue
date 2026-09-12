@@ -14,6 +14,37 @@ const form = useForm({
 });
 
 const submit = () => {
+    form.clearErrors();
+    let hasError = false;
+
+    if (!form.name || !form.name.trim()) {
+        form.setError('name', 'Nama lengkap wajib diisi');
+        hasError = true;
+    }
+    if (!form.email || !form.email.trim()) {
+        form.setError('email', 'Alamat email wajib diisi');
+        hasError = true;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+        form.setError('email', 'Format email tidak valid');
+        hasError = true;
+    }
+    if (!form.password) {
+        form.setError('password', 'Kata sandi wajib diisi');
+        hasError = true;
+    } else if (form.password.length < 8) {
+        form.setError('password', 'Kata sandi minimal 8 karakter');
+        hasError = true;
+    }
+    if (!form.password_confirmation) {
+        form.setError('password_confirmation', 'Konfirmasi kata sandi wajib diisi');
+        hasError = true;
+    } else if (form.password && form.password !== form.password_confirmation) {
+        form.setError('password_confirmation', 'Konfirmasi kata sandi tidak sesuai');
+        hasError = true;
+    }
+
+    if (hasError) return;
+
     form.post(route('register'), {
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
@@ -24,7 +55,7 @@ const submit = () => {
     <GuestLayout>
         <Head title="Register" />
 
-        <form @submit.prevent="submit">
+        <form novalidate @submit.prevent="submit">
             <div>
                 <InputLabel for="name" value="Name" />
 
@@ -33,7 +64,7 @@ const submit = () => {
                     type="text"
                     class="mt-1 block w-full"
                     v-model="form.name"
-                    required
+                    @input="form.clearErrors('name')"
                     autofocus
                     autocomplete="name"
                 />
@@ -49,7 +80,7 @@ const submit = () => {
                     type="email"
                     class="mt-1 block w-full"
                     v-model="form.email"
-                    required
+                    @input="form.clearErrors('email')"
                     autocomplete="username"
                 />
 
@@ -64,7 +95,7 @@ const submit = () => {
                     type="password"
                     class="mt-1 block w-full"
                     v-model="form.password"
-                    required
+                    @input="form.clearErrors('password')"
                     autocomplete="new-password"
                 />
 
@@ -82,7 +113,7 @@ const submit = () => {
                     type="password"
                     class="mt-1 block w-full"
                     v-model="form.password_confirmation"
-                    required
+                    @input="form.clearErrors('password_confirmation')"
                     autocomplete="new-password"
                 />
 

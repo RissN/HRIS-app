@@ -11,10 +11,13 @@ const props = defineProps({
   todayAttendance: Object,
   recentAttendances: Array,
   serverTime: String,
+  announcements: Array,
+  upcomingHolidays: Array,
+  officeLocation: Object,
 });
 
 const page = usePage();
-const office = computed(() => page.props.office || { latitude: -6.2088, longitude: 106.8456, radius: 150, name: 'Kantor Pusat' });
+const office = computed(() => props.officeLocation || page.props.office || { latitude: -6.2088, longitude: 106.8456, radius: 150, name: 'Kantor Pusat Jakarta' });
 
 // 1. Realtime Digital Clock
 const currentTime = ref('');
@@ -68,8 +71,7 @@ const getLocation = () => {
       geoLoading.value = false;
     },
     (err) => {
-      console.warn('Geolocation error:', err);
-      // Fallback for local development demo if user denies permission or browser blocks
+      console.warn('Geolocation fallback:', err);
       geoError.value = 'Izin lokasi tidak aktif atau diblokir. Menggunakan koordinat kantor untuk demo.';
       userLat.value = office.value.latitude;
       userLng.value = office.value.longitude;
@@ -121,7 +123,7 @@ const closeCamera = () => {
   isCameraOpen.value = false;
 };
 
-// 4. Check-in and Check-out Forms
+// 4. Forms
 const checkInForm = useForm({
   status: 'present',
   latitude: null,
@@ -155,7 +157,7 @@ const isDoneToday = computed(() => {
 
 const submitCheckIn = () => {
   if (checkInForm.status === 'present' && !isWithinRadius.value) {
-    alert(`Lokasi Anda (${distanceToOffice.value}m) di luar radius maksimal ${office.value.radius}m dari kantor.`);
+    alert(`Lokasi Anda (${distanceToOffice.value}m) berada di luar batas radius maksimal ${office.value.radius}m dari kantor.`);
     return;
   }
 
@@ -196,268 +198,395 @@ const formatTime = (timeStr) => {
   const date = new Date(timeStr);
   return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
 };
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-';
+  const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+  return new Date(dateStr).toLocaleDateString('id-ID', options);
+};
 </script>
 
 <template>
   <EmployeeLayout>
     <Head title="Presensi Hari Ini" />
 
-    <div class="row justify-content-center">
-      <div class="col-12 col-lg-8 col-xl-7">
-        <!-- Live Clock & Schedule Card -->
-        <div class="card border border-secondary border-opacity-25 shadow-sm p-4 rounded-4 mb-4 text-center" style="background: linear-gradient(180deg, #1e1b4b 0%, #161825 100%);">
-          <div class="text-secondary small text-uppercase fw-semibold mb-1" style="letter-spacing: 0.08em;">
+    <div class="max-w-2xl mx-auto space-y-5">
+      <!-- Announcements Banner -->
+      <div v-if="announcements && announcements.length > 0" class="space-y-2.5">
+        <div
+          v-for="ann in announcements"
+          :key="ann.id"
+          class="p-4 rounded-2xl border text-sm flex items-start gap-3.5 transition shadow-xs"
+          :class="{
+            'bg-blue-50/90 border-blue-200/80 text-blue-900': ann.type === 'info' || ann.type === 'primary',
+            'bg-amber-50/90 border-amber-200/80 text-amber-950': ann.type === 'warning',
+            'bg-rose-50/90 border-rose-200/80 text-rose-950': ann.type === 'danger',
+          }"
+        >
+          <div class="mt-0.5 text-lg shrink-0">
+            <i v-if="ann.type === 'warning'" class="bi bi-exclamation-triangle-fill text-amber-600"></i>
+            <i v-else-if="ann.type === 'danger'" class="bi bi-shield-exclamation text-rose-600"></i>
+            <i v-else class="bi bi-megaphone-fill text-blue-600"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2 mb-0.5">
+              <h4 class="font-bold text-xs uppercase tracking-wider opacity-90">{{ ann.title }}</h4>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-white/60">Pengumuman</span>
+            </div>
+            <p class="text-xs leading-relaxed opacity-85">{{ ann.content }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming Holiday Notice -->
+      <div
+        v-if="upcomingHolidays && upcomingHolidays.length > 0"
+        class="bg-indigo-50/80 border border-indigo-100/90 rounded-2xl px-4 py-3 flex items-center justify-between gap-3 text-xs text-indigo-900 shadow-xs"
+      >
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-bold">
+            <i class="bi bi-calendar-event-fill"></i>
+          </div>
+          <div>
+            <span class="text-slate-500 font-medium">Libur Nasional Terdekat: </span>
+            <strong class="font-bold text-indigo-950">{{ upcomingHolidays[0].name }}</strong>
+            <span class="text-indigo-600 ml-1">({{ formatDate(upcomingHolidays[0].date) }})</span>
+          </div>
+        </div>
+        <span class="text-[10px] font-bold uppercase tracking-wider bg-indigo-200/60 text-indigo-800 px-2 py-0.5 rounded-md shrink-0">Libur</span>
+      </div>
+
+      <!-- 1. Live Clock & Shift Card (Gradient Blue Minimalist) -->
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 text-white p-6 sm:p-8 shadow-xl shadow-blue-600/20 text-center">
+        <!-- Background decorative circle -->
+        <div class="absolute -top-12 -right-12 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="absolute -bottom-12 -left-12 w-40 h-40 bg-blue-400/20 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div class="relative z-10">
+          <div class="text-blue-100 text-xs font-semibold uppercase tracking-widest mb-1.5">
             {{ currentDate }}
           </div>
-          <div class="display-4 fw-bold text-white mb-2 tracking-tight">
+          <div class="text-4xl sm:text-5xl font-black tracking-tight my-2">
             {{ currentTime }}
           </div>
-          <div class="d-inline-flex align-items-center justify-content-center gap-2 bg-dark bg-opacity-60 px-3 py-1 rounded-pill mx-auto small border border-secondary border-opacity-25">
-            <i class="bi bi-briefcase text-primary"></i>
-            <span class="text-white">{{ schedule?.name || 'Shift Reguler' }}</span>
-            <span class="text-secondary">({{ schedule?.start_time ? schedule.start_time.substring(0,5) : '08:00' }} - {{ schedule?.end_time ? schedule.end_time.substring(0,5) : '17:00' }})</span>
+          <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-medium text-white/95 border border-white/20 mt-1">
+            <i class="bi bi-briefcase text-blue-200"></i>
+            <span>{{ schedule?.name || 'Shift Reguler' }}</span>
+            <span class="text-blue-200 font-semibold">
+              ({{ schedule?.start_time ? schedule.start_time.substring(0,5) : '08:00' }} - {{ schedule?.end_time ? schedule.end_time.substring(0,5) : '17:00' }})
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Location & Radar Card -->
+      <div class="bg-white rounded-3xl border border-slate-100 p-5 sm:p-6 shadow-xs">
+        <div class="flex items-center justify-between mb-3.5">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <i class="bi bi-geo-alt-fill text-lg"></i>
+            </div>
+            <div>
+              <div class="font-bold text-slate-900 text-sm">Lokasi Presensi GPS</div>
+              <div class="text-xs text-slate-400 font-medium">{{ office.name }}</div>
+            </div>
+          </div>
+
+          <button 
+            type="button" 
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-blue-600 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-xl transition-colors cursor-pointer"
+            @click="getLocation"
+          >
+            <i class="bi bi-arrow-clockwise text-xs"></i>
+            <span>Refresh GPS</span>
+          </button>
+        </div>
+
+        <!-- Radar Status -->
+        <div v-if="geoLoading" class="py-3 text-center text-xs text-slate-400 flex items-center justify-center gap-2 bg-slate-50 rounded-2xl">
+          <span class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+          <span>Mendeteksi koordinat GPS perangkat Anda...</span>
+        </div>
+        <div 
+          v-else 
+          class="p-4 rounded-2xl border transition-all"
+          :class="isWithinRadius ? 'bg-emerald-50/60 border-emerald-200/80' : 'bg-rose-50/60 border-rose-200/80'"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs font-bold flex items-center gap-1.5" :class="isWithinRadius ? 'text-emerald-700' : 'text-rose-700'">
+                <i :class="isWithinRadius ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'"></i>
+                <span>{{ isWithinRadius ? 'Berada Dalam Radius Kantor' : 'Di Luar Batas Radius Kantor' }}</span>
+              </div>
+              <div class="text-[11px] text-slate-500 mt-1">
+                Jarak Anda: <strong class="text-slate-800">{{ distanceToOffice }} meter</strong> &bull; Batas maksimal: {{ office.radius }}m
+              </div>
+            </div>
+
+            <span 
+              class="px-2.5 py-1 text-xs font-semibold rounded-full border"
+              :class="isWithinRadius ? 'bg-emerald-100/70 text-emerald-800 border-emerald-300' : 'bg-rose-100/70 text-rose-800 border-rose-300'"
+            >
+              {{ isWithinRadius ? 'Bisa Hadir' : 'Luar Radius' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Attendance Action Section -->
+      <div class="bg-white rounded-3xl border border-slate-100 p-6 sm:p-7 shadow-xs">
+        <h6 class="font-bold text-slate-900 text-sm flex items-center gap-2 mb-4">
+          <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+            <i class="bi bi-fingerprint text-base"></i>
+          </div>
+          <span>Aktivitas Presensi Hari Ini</span>
+        </h6>
+
+        <!-- State 1: Completed Today -->
+        <div v-if="isDoneToday" class="text-center py-4">
+          <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-3">
+            <i class="bi bi-check-circle-fill text-3xl"></i>
+          </div>
+          <h5 class="text-lg font-bold text-slate-900">Absensi Hari Ini Lengkap!</h5>
+          <p class="text-xs text-slate-500 mt-1 mb-5">Terima kasih, seluruh rekaman jam kerja hari ini telah tersimpan.</p>
+
+          <div class="grid grid-cols-2 gap-3 max-w-sm mx-auto">
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Jam Masuk</span>
+              <span class="text-base font-bold text-emerald-600 mt-0.5 block">{{ formatTime(todayAttendance.check_in_at) }}</span>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Jam Keluar</span>
+              <span class="text-base font-bold text-blue-600 mt-0.5 block">{{ formatTime(todayAttendance.check_out_at) }}</span>
+            </div>
           </div>
         </div>
 
-        <!-- Location Radar Card -->
-        <div class="card border border-secondary border-opacity-25 shadow-sm p-3 rounded-4 mb-4">
-          <div class="d-flex align-items-center justify-content-between mb-2">
-            <div class="d-flex align-items-center gap-2">
-              <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
-              <div>
-                <div class="fw-bold text-white small">Lokasi Anda & Kantor</div>
-                <div class="text-secondary" style="font-size: 0.72rem;">{{ office.name }}</div>
-              </div>
-            </div>
-            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size: 0.75rem;" @click="getLocation">
-              <i class="bi bi-arrow-clockwise me-1"></i> Refresh
-            </button>
-          </div>
+        <!-- State 2: Ready to Check-In -->
+        <form v-else-if="canCheckIn" @submit.prevent="submitCheckIn" class="space-y-4">
+          <!-- Status Grid Selection -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+              Pilih Status Kehadiran *
+            </label>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <!-- Hadir -->
+              <label 
+                class="flex flex-col items-center justify-center p-3 rounded-2xl border cursor-pointer transition-all text-center"
+                :class="checkInForm.status === 'present' ? 'bg-blue-50/80 border-blue-600 text-blue-700 ring-2 ring-blue-600/20 font-semibold' : 'bg-slate-50/70 border-slate-200 text-slate-600 hover:bg-slate-100'"
+              >
+                <input type="radio" value="present" v-model="checkInForm.status" class="hidden">
+                <i class="bi bi-building text-xl mb-1" :class="checkInForm.status === 'present' ? 'text-blue-600' : 'text-slate-400'"></i>
+                <span class="text-xs">Hadir Kantor</span>
+              </label>
 
-          <!-- Radius info -->
-          <div v-if="geoLoading" class="text-center py-2 text-secondary small">
-            <span class="spinner-border spinner-border-sm me-2"></span> Mendeteksi koordinat GPS...
-          </div>
-          <div v-else class="p-2 rounded-3" :class="isWithinRadius ? 'bg-success bg-opacity-10 border border-success border-opacity-25' : 'bg-danger bg-opacity-10 border border-danger border-opacity-25'">
-            <div class="d-flex align-items-center justify-content-between">
-              <div class="small">
-                <span :class="isWithinRadius ? 'text-success fw-bold' : 'text-danger fw-bold'">
-                  <i :class="isWithinRadius ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'"></i>
-                  {{ isWithinRadius ? 'Dalam Radius Kantor' : 'Di Luar Radius Kantor' }}
-                </span>
-                <div class="text-secondary" style="font-size: 0.72rem;">
-                  Jarak: <strong>{{ distanceToOffice }} meter</strong> (Maks. {{ office.radius }}m)
-                </div>
-              </div>
-              <span class="badge" :class="isWithinRadius ? 'bg-success' : 'bg-danger'">
-                {{ isWithinRadius ? 'Bisa Hadir' : 'Luar Radius' }}
-              </span>
-            </div>
-          </div>
-        </div>
+              <!-- WFH -->
+              <label 
+                class="flex flex-col items-center justify-center p-3 rounded-2xl border cursor-pointer transition-all text-center"
+                :class="checkInForm.status === 'wfh' ? 'bg-blue-50/80 border-blue-600 text-blue-700 ring-2 ring-blue-600/20 font-semibold' : 'bg-slate-50/70 border-slate-200 text-slate-600 hover:bg-slate-100'"
+              >
+                <input type="radio" value="wfh" v-model="checkInForm.status" class="hidden">
+                <i class="bi bi-laptop text-xl mb-1" :class="checkInForm.status === 'wfh' ? 'text-blue-600' : 'text-slate-400'"></i>
+                <span class="text-xs">WFH</span>
+              </label>
 
-        <!-- Attendance Action Form / State -->
-        <div class="card border border-secondary border-opacity-25 shadow-sm p-4 rounded-4 mb-4">
-          <h6 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
-            <i class="bi bi-fingerprint text-primary"></i>
-            Aktivitas Presensi Hari Ini
-          </h6>
+              <!-- Izin -->
+              <label 
+                class="flex flex-col items-center justify-center p-3 rounded-2xl border cursor-pointer transition-all text-center"
+                :class="checkInForm.status === 'permission' ? 'bg-blue-50/80 border-blue-600 text-blue-700 ring-2 ring-blue-600/20 font-semibold' : 'bg-slate-50/70 border-slate-200 text-slate-600 hover:bg-slate-100'"
+              >
+                <input type="radio" value="permission" v-model="checkInForm.status" class="hidden">
+                <i class="bi bi-card-checklist text-xl mb-1" :class="checkInForm.status === 'permission' ? 'text-blue-600' : 'text-slate-400'"></i>
+                <span class="text-xs">Izin</span>
+              </label>
 
-          <!-- State 1: Already Completed for Today -->
-          <div v-if="isDoneToday" class="text-center py-3">
-            <div class="d-inline-flex bg-success bg-opacity-10 text-success p-3 rounded-circle mb-2">
-              <i class="bi bi-check-circle-fill fs-2"></i>
-            </div>
-            <h5 class="text-white fw-bold">Absensi Hari Ini Selesai!</h5>
-            <p class="text-secondary small mb-3">Terima kasih atas kerja keras Anda hari ini.</p>
-            <div class="row g-2 justify-content-center">
-              <div class="col-5 p-2 bg-dark rounded-2 border border-secondary border-opacity-25">
-                <small class="text-secondary d-block">Masuk</small>
-                <span class="fw-bold text-success">{{ formatTime(todayAttendance.check_in_at) }}</span>
-              </div>
-              <div class="col-5 p-2 bg-dark rounded-2 border border-secondary border-opacity-25">
-                <small class="text-secondary d-block">Keluar</small>
-                <span class="fw-bold text-info">{{ formatTime(todayAttendance.check_out_at) }}</span>
-              </div>
+              <!-- Sakit -->
+              <label 
+                class="flex flex-col items-center justify-center p-3 rounded-2xl border cursor-pointer transition-all text-center"
+                :class="checkInForm.status === 'sick' ? 'bg-blue-50/80 border-blue-600 text-blue-700 ring-2 ring-blue-600/20 font-semibold' : 'bg-slate-50/70 border-slate-200 text-slate-600 hover:bg-slate-100'"
+              >
+                <input type="radio" value="sick" v-model="checkInForm.status" class="hidden">
+                <i class="bi bi-heart-pulse text-xl mb-1" :class="checkInForm.status === 'sick' ? 'text-blue-600' : 'text-slate-400'"></i>
+                <span class="text-xs">Sakit</span>
+              </label>
             </div>
           </div>
 
-          <!-- State 2: Ready to Check-In -->
-          <form v-else-if="canCheckIn" @submit.prevent="submitCheckIn">
-            <!-- Status Selection -->
-            <div class="mb-3">
-              <label class="form-label small text-secondary fw-semibold">Status Kehadiran *</label>
-              <div class="row g-2">
-                <div class="col-6 col-sm-3">
-                  <input type="radio" class="btn-check" id="st-present" value="present" v-model="checkInForm.status">
-                  <label class="btn btn-outline-success w-100 py-2 small" for="st-present">
-                    <i class="bi bi-building d-block mb-1 fs-5"></i> Hadir
-                  </label>
-                </div>
-                <div class="col-6 col-sm-3">
-                  <input type="radio" class="btn-check" id="st-wfh" value="wfh" v-model="checkInForm.status">
-                  <label class="btn btn-outline-info w-100 py-2 small" for="st-wfh">
-                    <i class="bi bi-laptop d-block mb-1 fs-5"></i> WFH
-                  </label>
-                </div>
-                <div class="col-6 col-sm-3">
-                  <input type="radio" class="btn-check" id="st-permission" value="permission" v-model="checkInForm.status">
-                  <label class="btn btn-outline-purple w-100 py-2 small" for="st-permission">
-                    <i class="bi bi-card-checklist d-block mb-1 fs-5"></i> Izin
-                  </label>
-                </div>
-                <div class="col-6 col-sm-3">
-                  <input type="radio" class="btn-check" id="st-sick" value="sick" v-model="checkInForm.status">
-                  <label class="btn btn-outline-primary w-100 py-2 small" for="st-sick">
-                    <i class="bi bi-heart-pulse d-block mb-1 fs-5"></i> Sakit
-                  </label>
-                </div>
-              </div>
-            </div>
+          <!-- Note Input -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Catatan Keterangan (Opsional)
+            </label>
+            <input 
+              v-model="checkInForm.note" 
+              type="text" 
+              class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" 
+              placeholder="Contoh: Bekerja di klien, agak flu, dll."
+            />
+          </div>
 
-            <!-- Notes Field -->
-            <div class="mb-3">
-              <label class="form-label small text-secondary fw-semibold">Catatan Keterangan (Opsional)</label>
-              <input 
-                v-model="checkInForm.note" 
-                type="text" 
-                class="form-control form-control-sm" 
-                placeholder="Contoh: Bertugas di klien, agak flu, dsb."
-              />
-            </div>
+          <!-- Selfie Camera Section -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Foto Selfie (Opsional)
+            </label>
 
-            <!-- Selfie Capture Section -->
-            <div class="mb-4">
-              <label class="form-label small text-secondary fw-semibold d-block">Foto Selfie (Opsional)</label>
-              
-              <!-- Video Preview when camera active -->
-              <div v-if="isCameraOpen" class="text-center mb-2">
-                <video ref="videoRef" autoplay playsinline class="rounded-3 border border-secondary w-100" style="max-height: 240px; object-fit: cover;"></video>
-                <div class="d-flex justify-content-center gap-2 mt-2">
-                  <button type="button" class="btn btn-success btn-sm" @click="capturePhoto">
-                    <i class="bi bi-camera me-1"></i> Ambil Foto
-                  </button>
-                  <button type="button" class="btn btn-secondary btn-sm" @click="closeCamera">
-                    Batal
-                  </button>
-                </div>
-              </div>
-
-              <!-- Photo preview when taken -->
-              <div v-else-if="photoDataUrl" class="d-flex align-items-center gap-3">
-                <img :src="photoDataUrl" class="rounded-3 border border-secondary" style="width: 80px; height: 80px; object-fit: cover;" />
-                <div>
-                  <div class="text-success small fw-semibold"><i class="bi bi-check2"></i> Foto selfie terlampir</div>
-                  <button type="button" class="btn btn-outline-danger btn-sm py-0 mt-1" style="font-size: 0.72rem;" @click="photoDataUrl = null">
-                    Hapus
-                  </button>
-                </div>
-              </div>
-
-              <!-- Button to open camera -->
-              <div v-else>
-                <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2" @click="openCamera">
-                  <i class="bi bi-camera-fill text-primary"></i> Ambil Selfie Kamera
+            <!-- Video preview -->
+            <div v-if="isCameraOpen" class="space-y-2 text-center">
+              <video ref="videoRef" autoplay playsinline class="w-full max-h-56 object-cover rounded-2xl border border-slate-200 bg-black"></video>
+              <div class="flex justify-center gap-2">
+                <button 
+                  type="button" 
+                  class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                  @click="capturePhoto"
+                >
+                  <i class="bi bi-camera"></i>
+                  <span>Ambil Foto</span>
+                </button>
+                <button 
+                  type="button" 
+                  class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                  @click="closeCamera"
+                >
+                  Batal
                 </button>
               </div>
             </div>
 
-            <!-- Check-in Big Mobile Button -->
-            <button 
-              type="submit" 
-              class="btn btn-primary btn-mobile-lg w-100 shadow"
-              :disabled="checkInForm.processing || (checkInForm.status === 'present' && !isWithinRadius)"
-            >
-              <span v-if="checkInForm.processing" class="spinner-border spinner-border-sm me-2"></span>
-              <i v-else class="bi bi-box-arrow-in-right fs-5"></i>
-              <span>Check-in Sekarang</span>
-            </button>
-            <div v-if="checkInForm.status === 'present' && !isWithinRadius" class="text-danger text-center small mt-2">
-              <i class="bi bi-exclamation-triangle"></i> Anda harus berada dalam radius kantor untuk Check-in Hadir.
-            </div>
-          </form>
-
-          <!-- State 3: Ready to Check-Out -->
-          <form v-else-if="canCheckOut" @submit.prevent="submitCheckOut">
-            <div class="alert alert-info py-2 px-3 small rounded-3 mb-3 d-flex align-items-center gap-2">
-              <i class="bi bi-info-circle fs-5"></i>
+            <!-- Taken Photo preview -->
+            <div v-else-if="photoDataUrl" class="flex items-center gap-3 p-3 bg-emerald-50/60 rounded-2xl border border-emerald-200/80">
+              <img :src="photoDataUrl" class="w-16 h-16 rounded-xl object-cover border border-emerald-300" />
               <div>
-                Anda telah check-in pada pukul <strong>{{ formatTime(todayAttendance.check_in_at) }}</strong> (Status: <StatusBadge :status="todayAttendance.status" />).
+                <div class="text-emerald-800 text-xs font-bold flex items-center gap-1">
+                  <i class="bi bi-check2-circle"></i>
+                  <span>Foto selfie tersimpan</span>
+                </div>
+                <button 
+                  type="button" 
+                  class="text-[11px] font-semibold text-rose-600 hover:text-rose-700 underline mt-1 cursor-pointer"
+                  @click="photoDataUrl = null"
+                >
+                  Hapus & Ambil Ulang
+                </button>
               </div>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label small text-secondary fw-semibold">Catatan Kepulangan (Opsional)</label>
-              <input 
-                v-model="checkOutForm.note" 
-                type="text" 
-                class="form-control form-control-sm" 
-                placeholder="Pekerjaan hari ini selesai, dsb."
-              />
+            <!-- Camera button -->
+            <div v-else>
+              <button 
+                type="button" 
+                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                @click="openCamera"
+              >
+                <i class="bi bi-camera-fill text-blue-600"></i>
+                <span>Buka Kamera Selfie</span>
+              </button>
             </div>
+          </div>
 
-            <!-- Check-out Big Mobile Button -->
-            <button 
-              type="submit" 
-              class="btn btn-danger btn-mobile-lg w-100 shadow"
-              :disabled="checkOutForm.processing"
-            >
-              <span v-if="checkOutForm.processing" class="spinner-border spinner-border-sm me-2"></span>
-              <i v-else class="bi bi-box-arrow-left fs-5"></i>
-              <span>Check-out Pulang</span>
-            </button>
-          </form>
+          <!-- Big Touch-Friendly Button -->
+          <button 
+            type="submit" 
+            class="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            :disabled="checkInForm.processing || (checkInForm.status === 'present' && !isWithinRadius)"
+          >
+            <span v-if="checkInForm.processing" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <i v-else class="bi bi-box-arrow-in-right text-lg"></i>
+            <span>Check-in Sekarang</span>
+          </button>
+
+          <div v-if="checkInForm.status === 'present' && !isWithinRadius" class="text-rose-600 text-center text-xs font-medium flex items-center justify-center gap-1">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>Anda harus berada dalam radius kantor untuk status Hadir.</span>
+          </div>
+        </form>
+
+        <!-- State 3: Ready to Check-Out -->
+        <form v-else-if="canCheckOut" @submit.prevent="submitCheckOut" class="space-y-4">
+          <div class="p-3.5 bg-blue-50/70 border border-blue-200/70 rounded-2xl text-xs text-blue-800 flex items-center gap-2.5">
+            <i class="bi bi-info-circle-fill text-blue-600 text-base shrink-0"></i>
+            <div>
+              Anda telah check-in pada pukul <strong>{{ formatTime(todayAttendance.check_in_at) }}</strong> 
+              (Status: <StatusBadge :status="todayAttendance.status" />).
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Catatan Kepulangan (Opsional)
+            </label>
+            <input 
+              v-model="checkOutForm.note" 
+              type="text" 
+              class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" 
+              placeholder="Pekerjaan hari ini selesai, dsb."
+            />
+          </div>
+
+          <!-- Big Check-out Button -->
+          <button 
+            type="submit" 
+            class="w-full h-14 rounded-2xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-rose-600/25 flex items-center justify-center gap-2.5 transition-all disabled:opacity-50 cursor-pointer"
+            :disabled="checkOutForm.processing"
+          >
+            <span v-if="checkOutForm.processing" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <i v-else class="bi bi-box-arrow-left text-lg"></i>
+            <span>Check-out Pulang</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- 4. 7 Days Recent History -->
+      <div class="bg-white rounded-3xl border border-slate-100 p-6 sm:p-7 shadow-xs">
+        <div class="flex items-center justify-between mb-4">
+          <h6 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+              <i class="bi bi-clock-history text-base"></i>
+            </div>
+            <span>Riwayat 7 Hari Terakhir</span>
+          </h6>
+          <Link :href="route('employee.history')" class="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1">
+            <span>Lihat Semua</span>
+            <i class="bi bi-arrow-right"></i>
+          </Link>
         </div>
 
-        <!-- 7 Days History Section -->
-        <div class="card border border-secondary border-opacity-25 shadow-sm p-4 rounded-4">
-          <div class="d-flex align-items-center justify-content-between mb-3">
-            <h6 class="fw-bold text-white mb-0 d-flex align-items-center gap-2">
-              <i class="bi bi-clock-history text-primary"></i>
-              Riwayat 7 Hari Terakhir
-            </h6>
-            <Link :href="route('employee.history')" class="small text-primary text-decoration-none fw-medium">
-              Lihat Semua &rarr;
-            </Link>
+        <div v-if="recentAttendances && recentAttendances.length > 0">
+          <!-- Mobile View: Cards -->
+          <div class="md:hidden space-y-2">
+            <AttendanceCard 
+              v-for="item in recentAttendances" 
+              :key="item.id" 
+              :attendance="item" 
+            />
           </div>
 
-          <div v-if="recentAttendances && recentAttendances.length > 0">
-            <!-- Mobile Card View -->
-            <div class="d-md-none">
-              <AttendanceCard 
-                v-for="item in recentAttendances" 
-                :key="item.id" 
-                :attendance="item" 
-              />
-            </div>
-
-            <!-- Desktop Table View -->
-            <div class="d-none d-md-block table-responsive">
-              <table class="table table-hover align-middle small mb-0">
-                <thead>
-                  <tr class="text-secondary">
-                    <th>Tanggal</th>
-                    <th>Jam Masuk</th>
-                    <th>Jam Keluar</th>
-                    <th>Status</th>
-                    <th>Keterangan</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="item in recentAttendances" :key="item.id">
-                    <td class="text-white fw-medium">{{ item.date }}</td>
-                    <td class="text-success fw-bold">{{ formatTime(item.check_in_at) }}</td>
-                    <td class="text-info fw-bold">{{ formatTime(item.check_out_at) }}</td>
-                    <td><StatusBadge :status="item.status" /></td>
-                    <td class="text-secondary text-truncate" style="max-width: 180px;">{{ item.note || '-' }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          <!-- Desktop View: Table -->
+          <div class="hidden md:block overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-semibold">
+                  <th class="pb-3 px-2">Tanggal</th>
+                  <th class="pb-3 px-2">Jam Masuk</th>
+                  <th class="pb-3 px-2">Jam Keluar</th>
+                  <th class="pb-3 px-2">Status</th>
+                  <th class="pb-3 px-2">Keterangan</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-50">
+                <tr v-for="item in recentAttendances" :key="item.id" class="hover:bg-slate-50/80 transition-colors">
+                  <td class="py-3 px-2 font-semibold text-slate-900">{{ item.date }}</td>
+                  <td class="py-3 px-2 font-bold text-emerald-600">{{ formatTime(item.check_in_at) }}</td>
+                  <td class="py-3 px-2 font-bold text-blue-600">{{ formatTime(item.check_out_at) }}</td>
+                  <td class="py-3 px-2"><StatusBadge :status="item.status" /></td>
+                  <td class="py-3 px-2 text-slate-500 max-w-xs truncate">{{ item.note || '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div v-else class="text-center py-4 text-secondary small">
-            Belum ada data riwayat presensi.
-          </div>
+        </div>
+        <div v-else class="text-center py-6 text-xs text-slate-400">
+          Belum ada riwayat presensi yang tercatat.
         </div>
       </div>
     </div>

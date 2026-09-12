@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Complaint;
 use App\Models\LeaveRequest;
+use App\Models\Notification;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -72,6 +73,10 @@ class HandleInertiaRequests extends Middleware
                 'leaveRequests' => $pendingLeaveCount,
                 'complaints' => $pendingComplaintCount,
             ],
+            'notifications' => fn () => $user ? [
+                'unread_count' => Notification::where('user_id', $user->id)->where('is_read', false)->count(),
+                'list' => Notification::where('user_id', $user->id)->latest()->take(6)->get(),
+            ] : null,
         ];
     }
 }

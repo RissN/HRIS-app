@@ -33,6 +33,15 @@ const editForm = useForm({
   note: '',
 });
 
+const statusOptions = [
+  { value: 'present', label: 'Hadir', icon: 'bi-check-circle-fill', color: 'text-emerald-700 bg-emerald-50 border-emerald-300 ring-emerald-500/20' },
+  { value: 'late', label: 'Terlambat', icon: 'bi-clock-history', color: 'text-amber-700 bg-amber-50 border-amber-300 ring-amber-500/20' },
+  { value: 'wfh', label: 'WFH', icon: 'bi-laptop', color: 'text-blue-700 bg-blue-50 border-blue-300 ring-blue-500/20' },
+  { value: 'permission', label: 'Izin', icon: 'bi-file-text', color: 'text-sky-700 bg-sky-50 border-sky-300 ring-sky-500/20' },
+  { value: 'sick', label: 'Sakit', icon: 'bi-bandaid', color: 'text-purple-700 bg-purple-50 border-purple-300 ring-purple-500/20' },
+  { value: 'absent', label: 'Alpa / Tidak Hadir', icon: 'bi-x-circle', color: 'text-rose-700 bg-rose-50 border-rose-300 ring-rose-500/20' },
+];
+
 const openEdit = (att) => {
   editingAttendance.value = att;
   editForm.check_in_at = att.check_in_at ? att.check_in_at.substring(0, 16) : '';
@@ -44,6 +53,21 @@ const openEdit = (att) => {
 
 const submitEdit = () => {
   if (!editingAttendance.value) return;
+
+  editForm.clearErrors();
+  let hasError = false;
+
+  if (!editForm.status) {
+    editForm.setError('status', 'Pilih status kehadiran baru');
+    hasError = true;
+  }
+  if (!editForm.note || !editForm.note.trim()) {
+    editForm.setError('note', 'Keterangan atau alasan koreksi presensi wajib diisi');
+    hasError = true;
+  }
+
+  if (hasError) return;
+
   editForm.put(route('admin.attendance.update', editingAttendance.value.id), {
     preserveScroll: true,
     onSuccess: () => {
@@ -69,151 +93,262 @@ const formatDate = (dateStr) => {
   <AdminLayout>
     <Head title="Monitoring Presensi Pegawai" />
 
-    <div class="card border border-secondary border-opacity-25 shadow-sm p-3 p-md-4 rounded-4 mb-4">
-      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-3">
-        <div>
-          <h4 class="fw-bold text-white mb-1">Monitoring & Koreksi Presensi</h4>
-          <p class="text-secondary small mb-0">Pantau data kehadiran real-time seluruh pegawai dan lakukan koreksi jika diperlukan.</p>
-        </div>
-      </div>
-
-      <!-- Filters Row -->
-      <div class="row g-2 pt-3 border-top border-secondary border-opacity-25">
-        <div class="col-12 col-md-4">
-          <input 
-            v-model="search" 
-            type="text" 
-            class="form-control form-control-sm" 
-            placeholder="Cari nama pegawai..." 
-            @keyup.enter="applyFilter"
-          />
+    <div class="space-y-6">
+      <!-- Header & Filters Card -->
+      <div class="bg-white rounded-3xl border border-slate-100 p-5 sm:p-6 shadow-xs">
+        <div class="pb-4 mb-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Monitoring & Koreksi Presensi</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Pantau data kehadiran real-time seluruh pegawai dan lakukan koreksi jika diperlukan.</p>
+          </div>
+          <div class="text-xs text-slate-400 font-medium">
+            Total Record: <strong class="text-slate-800">{{ attendances?.length || 0 }}</strong>
+          </div>
         </div>
 
-        <div class="col-6 col-md-4">
-          <select v-model="filterDept" class="form-select form-select-sm" @change="applyFilter">
-            <option value="all">Semua Departemen</option>
-            <option v-for="d in departments" :key="d" :value="d">{{ d }}</option>
-          </select>
-        </div>
-
-        <div class="col-6 col-md-4 d-flex gap-2">
-          <input 
-            v-model="filterDate" 
-            type="date" 
-            class="form-control form-control-sm flex-fill" 
-            @change="applyFilter"
-          />
-          <button type="button" class="btn btn-sm btn-primary px-3" @click="applyFilter">
-            Filter
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Attendance Table -->
-    <div class="card border border-secondary border-opacity-25 shadow-sm p-3 p-md-4 rounded-4">
-      <div v-if="attendances && attendances.length > 0" class="table-responsive">
-        <table class="table table-hover align-middle small mb-0">
-          <thead>
-            <tr class="text-secondary border-bottom border-secondary border-opacity-25">
-              <th>Pegawai</th>
-              <th>Tanggal</th>
-              <th>Jam Masuk</th>
-              <th>Jam Keluar</th>
-              <th>Status</th>
-              <th>Keterangan / Selfie</th>
-              <th class="text-end">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="att in attendances" :key="att.id" class="border-bottom border-secondary border-opacity-10">
-              <td>
-                <div class="fw-bold text-white">{{ att.employee?.user?.name }}</div>
-                <small class="text-secondary">{{ att.employee?.position }} ({{ att.employee?.department }})</small>
-              </td>
-              <td class="text-white">{{ formatDate(att.date) }}</td>
-              <td class="text-success fw-bold">{{ formatTime(att.check_in_at) }}</td>
-              <td class="text-info fw-bold">{{ formatTime(att.check_out_at) }}</td>
-              <td><StatusBadge :status="att.status" /></td>
-              <td>
-                <div class="d-flex align-items-center gap-2">
-                  <a v-if="att.photo_path" :href="att.photo_path" target="_blank" title="Buka Selfie" class="text-info">
-                    <i class="bi bi-image fs-6"></i>
-                  </a>
-                  <span class="text-secondary text-truncate" style="max-width: 220px;">
-                    {{ att.note || '-' }}
-                  </span>
-                </div>
-              </td>
-              <td class="text-end">
-                <button type="button" class="btn btn-sm btn-outline-warning py-1 px-2" style="font-size: 0.75rem;" @click="openEdit(att)">
-                  <i class="bi bi-pencil-square"></i> Koreksi
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div v-else class="text-center py-5 text-secondary">
-        Tidak ditemukan data absensi untuk filter yang dipilih.
-      </div>
-    </div>
-
-    <!-- Edit Attendance Modal -->
-    <div v-if="showEditModal && editingAttendance" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65);" @click.self="showEditModal = false">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border border-secondary border-opacity-25 shadow-lg">
-          <div class="modal-header border-bottom border-secondary border-opacity-25">
-            <h5 class="modal-title fs-6 fw-bold text-white d-flex align-items-center gap-2">
-              <i class="bi bi-pencil text-warning"></i>
-              Koreksi Presensi: {{ editingAttendance.employee?.user?.name }}
-            </h5>
-            <button type="button" class="btn-close btn-close-white" @click="showEditModal = false"></button>
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+          <div class="sm:col-span-5">
+            <input 
+              v-model="search" 
+              type="text" 
+              class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" 
+              placeholder="Cari nama atau jabatan pegawai..." 
+              @keyup.enter="applyFilter"
+            />
           </div>
 
-          <form @submit.prevent="submitEdit">
-            <div class="modal-body">
-              <div class="p-2 bg-dark rounded-2 mb-3 small text-secondary">
-                Tanggal: <strong class="text-white">{{ formatDate(editingAttendance.date) }}</strong>
-              </div>
+          <div class="sm:col-span-3">
+            <select 
+              v-model="filterDept" 
+              class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" 
+              @change="applyFilter"
+            >
+              <option value="all">Semua Departemen</option>
+              <option v-for="d in departments" :key="d" :value="d">{{ d }}</option>
+            </select>
+          </div>
 
-              <div class="mb-3">
-                <label class="form-label small text-secondary fw-semibold">Status Kehadiran *</label>
-                <select v-model="editForm.status" class="form-select form-select-sm" required>
-                  <option value="present">Hadir</option>
-                  <option value="late">Terlambat</option>
-                  <option value="wfh">WFH</option>
-                  <option value="permission">Izin</option>
-                  <option value="sick">Sakit</option>
-                  <option value="absent">Absen / Alpa</option>
-                </select>
-              </div>
-
-              <div class="row g-2 mb-3">
-                <div class="col-6">
-                  <label class="form-label small text-secondary fw-semibold">Waktu Masuk</label>
-                  <input v-model="editForm.check_in_at" type="datetime-local" class="form-control form-control-sm" />
-                </div>
-                <div class="col-6">
-                  <label class="form-label small text-secondary fw-semibold">Waktu Keluar</label>
-                  <input v-model="editForm.check_out_at" type="datetime-local" class="form-control form-control-sm" />
-                </div>
-              </div>
-
-              <div class="mb-2">
-                <label class="form-label small text-secondary fw-semibold">Keterangan / Catatan Koreksi</label>
-                <textarea v-model="editForm.note" class="form-control form-control-sm" rows="3" placeholder="Alasan koreksi data..."></textarea>
-              </div>
-            </div>
-
-            <div class="modal-footer border-top border-secondary border-opacity-25 py-2">
-              <button type="button" class="btn btn-secondary btn-sm" @click="showEditModal = false">Batal</button>
-              <button type="submit" class="btn btn-warning btn-sm px-3 text-dark fw-semibold" :disabled="editForm.processing">
-                Simpan Koreksi
-              </button>
-            </div>
-          </form>
+          <div class="sm:col-span-4 flex items-center gap-2">
+            <input 
+              v-model="filterDate" 
+              type="date" 
+              class="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" 
+              @change="applyFilter"
+            />
+            <button 
+              type="button" 
+              class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer" 
+              @click="applyFilter"
+            >
+              Filter
+            </button>
+            <button 
+              type="button" 
+              class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold transition-colors cursor-pointer" 
+              @click="search = ''; filterDept = 'all'; filterDate = ''; applyFilter()"
+              title="Reset Filter"
+            >
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+          </div>
         </div>
+      </div>
+
+      <!-- Attendance Table Card -->
+      <div class="bg-white rounded-3xl border border-slate-100 shadow-xs overflow-hidden">
+        <div v-if="attendances && attendances.length > 0" class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-slate-50/60 border-b border-slate-100 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+                <th class="py-3 px-4">Pegawai</th>
+                <th class="py-3 px-4">Tanggal</th>
+                <th class="py-3 px-4">Jam Masuk</th>
+                <th class="py-3 px-4">Jam Keluar</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Keterangan / Bukti</th>
+                <th class="py-3 px-4 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr v-for="att in attendances" :key="att.id" class="hover:bg-slate-50/70 transition-colors">
+                <td class="py-3 px-4">
+                  <div class="font-bold text-slate-900 text-xs">{{ att.employee?.user?.name }}</div>
+                  <div class="text-[11px] text-slate-500">{{ att.employee?.position }} &bull; {{ att.employee?.department }}</div>
+                </td>
+                <td class="py-3 px-4 font-medium text-slate-700 whitespace-nowrap">{{ formatDate(att.date) }}</td>
+                <td class="py-3 px-4 font-bold text-emerald-600 whitespace-nowrap">{{ formatTime(att.check_in_at) }}</td>
+                <td class="py-3 px-4 font-bold text-blue-600 whitespace-nowrap">{{ formatTime(att.check_out_at) }}</td>
+                <td class="py-3 px-4 whitespace-nowrap"><StatusBadge :status="att.status" /></td>
+                <td class="py-3 px-4">
+                  <div class="flex items-center gap-2">
+                    <a 
+                      v-if="att.photo_path" 
+                      :href="att.photo_path" 
+                      target="_blank" 
+                      title="Lihat Foto Selfie" 
+                      class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors"
+                    >
+                      <i class="bi bi-camera text-xs"></i>
+                    </a>
+                    <span class="text-slate-600 max-w-xs truncate text-[11px]">{{ att.note || '-' }}</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-right whitespace-nowrap">
+                  <button 
+                    type="button" 
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/80 transition-colors cursor-pointer" 
+                    @click="openEdit(att)"
+                  >
+                    <i class="bi bi-pencil-square"></i>
+                    <span>Koreksi</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-else class="text-center py-14 text-slate-400 text-xs">
+          <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+            <i class="bi bi-calendar-x text-xl"></i>
+          </div>
+          <p class="font-semibold text-slate-600">Tidak ditemukan data absensi</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Silakan sesuaikan filter tanggal atau departemen di atas</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Centered Modal Dialog for Attendance Correction -->
+    <div 
+      v-if="showEditModal && editingAttendance" 
+      class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+      @click.self="showEditModal = false"
+    >
+      <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-xl w-full my-auto overflow-hidden animate-in fade-in zoom-in-95 flex flex-col max-h-[90vh]">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-xs">
+              <i class="bi bi-pencil-square text-lg"></i>
+            </div>
+            <div>
+              <h4 class="text-base font-bold text-slate-900 leading-tight">
+                Koreksi Presensi Pegawai
+              </h4>
+              <p class="text-xs text-slate-400 mt-0.5">
+                {{ editingAttendance.employee?.user?.name }} &bull; {{ formatDate(editingAttendance.date) }}
+              </p>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            class="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
+            @click="showEditModal = false"
+          >
+            <i class="bi bi-x-lg text-sm"></i>
+          </button>
+        </div>
+
+        <form novalidate @submit.prevent="submitEdit" class="flex flex-col flex-1 overflow-hidden">
+          <div class="p-6 space-y-4 text-xs text-slate-700 overflow-y-auto flex-1">
+            <!-- Employee Quick Card -->
+            <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+              <div>
+                <div class="font-bold text-slate-900 text-sm">{{ editingAttendance.employee?.user?.name }}</div>
+                <div class="text-[11px] text-slate-500">{{ editingAttendance.employee?.position }} &bull; {{ editingAttendance.employee?.department }}</div>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Status Saat Ini</span>
+                <StatusBadge :status="editingAttendance.status" />
+              </div>
+            </div>
+
+            <!-- Status Selector Pills -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Status Kehadiran Baru *</label>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <button
+                  v-for="opt in statusOptions"
+                  :key="opt.value"
+                  type="button"
+                  class="flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold text-left transition-all cursor-pointer"
+                  :class="editForm.status === opt.value ? opt.color + ' ring-2' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'"
+                  @click="editForm.status = opt.value; editForm.clearErrors('status')"
+                >
+                  <i :class="['bi', opt.icon, 'text-sm']"></i>
+                  <span>{{ opt.label }}</span>
+                </button>
+              </div>
+              <div v-if="editForm.errors.status" class="flex items-center gap-1.5 text-rose-600 text-xs mt-1.5 font-medium animate-in fade-in slide-in-from-top-1">
+                <i class="bi bi-exclamation-circle-fill text-xs shrink-0"></i>
+                <span>{{ editForm.errors.status }}</span>
+              </div>
+            </div>
+
+            <!-- Times Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                  Waktu Check-In (Masuk)
+                </label>
+                <input 
+                  v-model="editForm.check_in_at" 
+                  type="datetime-local" 
+                  class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-medium" 
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                  Waktu Check-Out (Pulang)
+                </label>
+                <input 
+                  v-model="editForm.check_out_at" 
+                  type="datetime-local" 
+                  class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-medium" 
+                />
+              </div>
+            </div>
+
+            <!-- Note Textarea -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                Keterangan / Alasan Koreksi Presensi *
+              </label>
+              <textarea 
+                v-model="editForm.note" 
+                @input="editForm.clearErrors('note')"
+                :class="editForm.errors.note 
+                  ? 'border-rose-400 bg-rose-50/20 text-rose-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20' 
+                  : 'border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20'"
+                class="w-full px-3.5 py-2.5 text-xs rounded-xl border placeholder-slate-400 outline-none transition-all leading-relaxed" 
+                rows="3" 
+                placeholder="Contoh: Koreksi absensi berdasarkan surat dinas luar atau perbaikan kendala teknis..."
+              ></textarea>
+              <div v-if="editForm.errors.note" class="flex items-center gap-1.5 text-rose-600 text-xs mt-1.5 font-medium animate-in fade-in slide-in-from-top-1">
+                <i class="bi bi-exclamation-circle-fill text-xs shrink-0"></i>
+                <span>{{ editForm.errors.note }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2 shrink-0">
+            <button 
+              type="button" 
+              class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-200 text-xs font-semibold transition-colors cursor-pointer" 
+              @click="showEditModal = false"
+            >
+              Batal
+            </button>
+            <button 
+              type="submit" 
+              class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+              :disabled="editForm.processing"
+            >
+              <i class="bi bi-check2"></i>
+              <span>Simpan Koreksi Presensi</span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </AdminLayout>

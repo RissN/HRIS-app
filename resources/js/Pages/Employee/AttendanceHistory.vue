@@ -51,115 +51,120 @@ const formatDate = (dateStr) => {
 
 <template>
   <EmployeeLayout>
-    <Head title="Riwayat Absensi" />
+    <Head title="Riwayat Presensi" />
 
-    <div class="row justify-content-center">
-      <div class="col-12 col-xl-10">
-        <!-- Header & Filters -->
-        <div class="card border border-secondary border-opacity-25 shadow-sm p-3 p-md-4 rounded-4 mb-4">
-          <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-            <div>
-              <h5 class="fw-bold text-white mb-1">Riwayat Presensi Saya</h5>
-              <p class="text-secondary small mb-0">Pantau rekapitulasi kehadiran dan ajukan komplain jika ada ketidaksesuaian.</p>
-            </div>
+    <div class="max-w-4xl mx-auto space-y-5">
+      <!-- Header & Filters Card -->
+      <div class="bg-white rounded-3xl border border-slate-100 p-5 sm:p-6 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Riwayat Presensi Saya</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Rekapitulasi kehadiran bulanan serta opsi pelaporan komplain.</p>
+          </div>
 
-            <!-- Month & Year Filter Form -->
-            <div class="d-flex align-items-center gap-2">
-              <select v-model="month" class="form-select form-select-sm" @change="applyFilter">
-                <option v-for="m in months" :key="m.value" :value="m.value">{{ m.label }}</option>
-              </select>
+          <!-- Month & Year Filters -->
+          <div class="flex items-center gap-2">
+            <select 
+              v-model="month" 
+              class="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+              @change="applyFilter"
+            >
+              <option v-for="m in months" :key="m.value" :value="m.value">{{ m.label }}</option>
+            </select>
 
-              <select v-model="year" class="form-select form-select-sm" @change="applyFilter">
-                <option :value="2024">2024</option>
-                <option :value="2025">2025</option>
-                <option :value="2026">2026</option>
-                <option :value="2027">2027</option>
-              </select>
-            </div>
+            <select 
+              v-model="year" 
+              class="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+              @change="applyFilter"
+            >
+              <option :value="2024">2024</option>
+              <option :value="2025">2025</option>
+              <option :value="2026">2026</option>
+              <option :value="2027">2027</option>
+            </select>
           </div>
         </div>
+      </div>
 
-        <!-- Summary Cards -->
-        <div class="row g-2 g-md-3 mb-4">
-          <div class="col-6 col-md-3">
-            <div class="card border border-secondary border-opacity-25 p-3 rounded-4 bg-success bg-opacity-10 text-center">
-              <div class="text-secondary small" style="font-size: 0.72rem;">TOTAL HADIR</div>
-              <div class="display-6 fw-bold text-success">{{ summary.present }}</div>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="card border border-secondary border-opacity-25 p-3 rounded-4 bg-warning bg-opacity-10 text-center">
-              <div class="text-secondary small" style="font-size: 0.72rem;">TERLAMBAT</div>
-              <div class="display-6 fw-bold text-warning">{{ summary.late }}</div>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="card border border-secondary border-opacity-25 p-3 rounded-4 bg-purple bg-opacity-10 text-center" style="background-color: rgba(168, 85, 247, 0.1);">
-              <div class="text-secondary small" style="font-size: 0.72rem;">IZIN / SAKIT / WFH</div>
-              <div class="display-6 fw-bold text-info">{{ summary.permission + summary.wfh }}</div>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="card border border-secondary border-opacity-25 p-3 rounded-4 bg-danger bg-opacity-10 text-center">
-              <div class="text-secondary small" style="font-size: 0.72rem;">ABSEN / ALPA</div>
-              <div class="display-6 fw-bold text-danger">{{ summary.absent }}</div>
-            </div>
-          </div>
+      <!-- 4 Summary Metric Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <!-- Hadir -->
+        <div class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-100 text-center">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Total Hadir</div>
+          <div class="text-2xl sm:text-3xl font-black text-emerald-700 mt-1">{{ summary.present }}</div>
         </div>
 
-        <!-- Attendance List / Table -->
-        <div class="card border border-secondary border-opacity-25 shadow-sm p-3 p-md-4 rounded-4">
-          <div v-if="attendances && attendances.length > 0">
-            <!-- Mobile Card View -->
-            <div class="d-md-none">
-              <AttendanceCard 
-                v-for="att in attendances" 
-                :key="att.id" 
-                :attendance="att" 
-                :show-complaint-btn="true"
-              />
-            </div>
+        <!-- Terlambat -->
+        <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-100 text-center">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-amber-600">Terlambat</div>
+          <div class="text-2xl sm:text-3xl font-black text-amber-700 mt-1">{{ summary.late }}</div>
+        </div>
 
-            <!-- Desktop Table View -->
-            <div class="d-none d-md-block table-responsive">
-              <table class="table table-hover align-middle small mb-0">
-                <thead>
-                  <tr class="text-secondary border-bottom border-secondary border-opacity-25">
-                    <th>Tanggal</th>
-                    <th>Jam Masuk</th>
-                    <th>Jam Keluar</th>
-                    <th>Status</th>
-                    <th>Keterangan</th>
-                    <th class="text-end">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="att in attendances" :key="att.id" class="border-bottom border-secondary border-opacity-10">
-                    <td class="text-white fw-medium">{{ formatDate(att.date) }}</td>
-                    <td class="text-success fw-bold">{{ formatTime(att.check_in_at) }}</td>
-                    <td class="text-info fw-bold">{{ formatTime(att.check_out_at) }}</td>
-                    <td><StatusBadge :status="att.status" /></td>
-                    <td class="text-secondary text-truncate" style="max-width: 200px;">
-                      {{ att.note || '-' }}
-                    </td>
-                    <td class="text-end">
-                      <Link 
-                        :href="route('employee.complaints.create', { attendance_id: att.id })" 
-                        class="btn btn-sm btn-outline-warning py-1 px-2"
-                        style="font-size: 0.75rem;"
-                      >
-                        <i class="bi bi-exclamation-triangle me-1"></i> Komplain
-                      </Link>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+        <!-- Izin/Sakit/WFH -->
+        <div class="p-4 rounded-2xl bg-blue-50/70 border border-blue-100 text-center">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-blue-600">Izin / Sakit / WFH</div>
+          <div class="text-2xl sm:text-3xl font-black text-blue-700 mt-1">{{ summary.permission + summary.wfh }}</div>
+        </div>
+
+        <!-- Absen/Alpa -->
+        <div class="p-4 rounded-2xl bg-rose-50/70 border border-rose-100 text-center">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-rose-600">Absen / Alpa</div>
+          <div class="text-2xl sm:text-3xl font-black text-rose-700 mt-1">{{ summary.absent }}</div>
+        </div>
+      </div>
+
+      <!-- Attendance List Card -->
+      <div class="bg-white rounded-3xl border border-slate-100 p-5 sm:p-6 shadow-xs">
+        <div v-if="attendances && attendances.length > 0">
+          <!-- Mobile View (Card List) -->
+          <div class="md:hidden space-y-2">
+            <AttendanceCard 
+              v-for="att in attendances" 
+              :key="att.id" 
+              :attendance="att" 
+              :show-complaint-btn="true"
+            />
           </div>
-          <div v-else class="text-center py-5 text-secondary">
-            <i class="bi bi-calendar-x fs-1 d-block mb-2 text-secondary"></i>
-            Tidak ada riwayat presensi pada bulan ini.
+
+          <!-- Desktop View (Table) -->
+          <div class="hidden md:block overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-semibold">
+                  <th class="pb-3 px-2">Tanggal</th>
+                  <th class="pb-3 px-2">Jam Masuk</th>
+                  <th class="pb-3 px-2">Jam Keluar</th>
+                  <th class="pb-3 px-2">Status</th>
+                  <th class="pb-3 px-2">Keterangan</th>
+                  <th class="pb-3 px-2 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-50">
+                <tr v-for="att in attendances" :key="att.id" class="hover:bg-slate-50/80 transition-colors">
+                  <td class="py-3 px-2 font-semibold text-slate-900">{{ formatDate(att.date) }}</td>
+                  <td class="py-3 px-2 font-bold text-emerald-600">{{ formatTime(att.check_in_at) }}</td>
+                  <td class="py-3 px-2 font-bold text-blue-600">{{ formatTime(att.check_out_at) }}</td>
+                  <td class="py-3 px-2"><StatusBadge :status="att.status" /></td>
+                  <td class="py-3 px-2 text-slate-500 max-w-xs truncate">{{ att.note || '-' }}</td>
+                  <td class="py-3 px-2 text-right">
+                    <Link 
+                      :href="route('employee.complaints.create', { attendance_id: att.id })" 
+                      class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg transition-colors"
+                    >
+                      <i class="bi bi-exclamation-triangle"></i>
+                      <span>Komplain</span>
+                    </Link>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
+        </div>
+        <div v-else class="text-center py-12 text-slate-400">
+          <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
+            <i class="bi bi-calendar-x text-2xl"></i>
+          </div>
+          <p class="text-xs font-medium">Tidak ada rekaman presensi pada bulan yang dipilih.</p>
         </div>
       </div>
     </div>

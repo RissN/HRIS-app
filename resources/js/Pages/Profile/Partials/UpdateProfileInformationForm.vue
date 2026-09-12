@@ -20,6 +20,25 @@ const form = useForm({
     name: user.name,
     email: user.email,
 });
+
+const submit = () => {
+    form.clearErrors();
+    let hasError = false;
+    if (!form.name || !form.name.trim()) {
+        form.setError('name', 'Nama lengkap wajib diisi');
+        hasError = true;
+    }
+    if (!form.email || !form.email.trim()) {
+        form.setError('email', 'Alamat email wajib diisi');
+        hasError = true;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+        form.setError('email', 'Format email tidak valid');
+        hasError = true;
+    }
+    if (hasError) return;
+
+    form.patch(route('profile.update'));
+};
 </script>
 
 <template>
@@ -35,7 +54,8 @@ const form = useForm({
         </header>
 
         <form
-            @submit.prevent="form.patch(route('profile.update'))"
+            novalidate
+            @submit.prevent="submit"
             class="mt-6 space-y-6"
         >
             <div>
@@ -46,7 +66,7 @@ const form = useForm({
                     type="text"
                     class="mt-1 block w-full"
                     v-model="form.name"
-                    required
+                    @input="form.clearErrors('name')"
                     autofocus
                     autocomplete="name"
                 />
@@ -62,7 +82,7 @@ const form = useForm({
                     type="email"
                     class="mt-1 block w-full"
                     v-model="form.email"
-                    required
+                    @input="form.clearErrors('email')"
                     autocomplete="username"
                 />
 

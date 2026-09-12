@@ -16,7 +16,7 @@ const emit = defineEmits(['close']);
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '-';
-  const options = { day: 'numeric', month: 'long', year: 'numeric' };
+  const options = { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' };
   return new Date(dateStr).toLocaleDateString('id-ID', options);
 };
 
@@ -28,86 +28,145 @@ const formatDateTime = (dtStr) => {
 </script>
 
 <template>
-  <div v-if="show && request" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65);" @click.self="emit('close')">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border border-secondary border-opacity-25 shadow-lg">
-        <div class="modal-header border-bottom border-secondary border-opacity-25">
-          <h5 class="modal-title fs-6 fw-bold text-white d-flex align-items-center gap-2">
-            <i class="bi bi-file-earmark-medical text-primary"></i>
-            Detail Pengajuan Cuti / Izin
-          </h5>
-          <button type="button" class="btn-close btn-close-white" @click="emit('close')"></button>
+  <div 
+    v-if="show && request" 
+    class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+    @click.self="emit('close')"
+  >
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-2xl w-full my-auto overflow-hidden animate-in fade-in zoom-in-95 flex flex-col max-h-[90vh]">
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-xs">
+            <i class="bi bi-file-earmark-medical text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-slate-900 leading-tight">Detail Permohonan Cuti & Izin</h4>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Pengajuan #{{ request.id }} &bull; {{ request.total_days }} Hari Kerja
+            </p>
+          </div>
         </div>
+        <button 
+          type="button" 
+          class="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
+          @click="emit('close')"
+        >
+          <i class="bi bi-x-lg text-sm"></i>
+        </button>
+      </div>
 
-        <div class="modal-body">
-          <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-dark bg-opacity-50 rounded-2">
-            <span class="text-secondary small">Status Pengajuan</span>
-            <StatusBadge :status="request.status" />
-          </div>
-
-          <div v-if="request.employee?.user" class="mb-3">
-            <label class="text-secondary small d-block">Nama Pegawai</label>
-            <div class="fw-semibold text-white">{{ request.employee.user.name }} ({{ request.employee.position }})</div>
-          </div>
-
-          <div class="row g-3 mb-3">
-            <div class="col-6">
-              <label class="text-secondary small d-block">Jenis Pengajuan</label>
-              <div class="fw-semibold text-white">
-                <StatusBadge :status="request.type" />
+      <!-- Body -->
+      <div class="flex-1 overflow-y-auto p-5 sm:p-6 text-slate-700 space-y-4">
+        <!-- Top Row: Status Banner & Employee Card -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Employee Card -->
+          <div v-if="request.employee?.user" class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
+            <img 
+              :src="request.employee.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(request.employee.user.name) + '&background=2563eb&color=fff'" 
+              class="w-11 h-11 rounded-xl object-cover ring-2 ring-white shadow-xs" 
+              alt="Avatar" 
+            />
+            <div class="overflow-hidden">
+              <div class="font-bold text-slate-900 text-sm truncate">{{ request.employee.user.name }}</div>
+              <div class="text-xs text-slate-500 truncate mt-0.5">{{ request.employee.position }} &bull; {{ request.employee.department }}</div>
+              <div v-if="request.employee.phone" class="text-[11px] text-slate-400 mt-0.5">
+                <i class="bi bi-telephone text-[10px] mr-1"></i>{{ request.employee.phone }}
               </div>
             </div>
-            <div class="col-6">
-              <label class="text-secondary small d-block">Total Hari Kerja</label>
-              <div class="fw-semibold text-primary fs-6">{{ request.total_days }} Hari</div>
-            </div>
           </div>
 
-          <div class="row g-3 mb-3">
-            <div class="col-6">
-              <label class="text-secondary small d-block">Tanggal Mulai</label>
-              <div class="text-white">{{ formatDate(request.start_date) }}</div>
+          <!-- Status & Type Card -->
+          <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status Permohonan</span>
+              <StatusBadge :status="request.status" />
             </div>
-            <div class="col-6">
-              <label class="text-secondary small d-block">Tanggal Selesai</label>
-              <div class="text-white">{{ formatDate(request.end_date) }}</div>
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="text-secondary small d-block">Alasan Pengajuan</label>
-            <div class="p-2 bg-dark bg-opacity-50 rounded-2 text-white small" style="white-space: pre-wrap;">
-              {{ request.reason }}
-            </div>
-          </div>
-
-          <div v-if="request.attachment" class="mb-3">
-            <label class="text-secondary small d-block mb-1">Lampiran Dokumen</label>
-            <a 
-              :href="request.attachment" 
-              target="_blank" 
-              class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-2"
-            >
-              <i class="bi bi-paperclip"></i>
-              Buka File Lampiran
-            </a>
-          </div>
-
-          <!-- Review Details -->
-          <div v-if="request.reviewed_at" class="mt-3 pt-3 border-top border-secondary border-opacity-25">
-            <div class="small text-secondary mb-1">
-              Ditinjau oleh: <span class="text-white">{{ request.reviewer?.name || 'HR Admin' }}</span> 
-              pada {{ formatDateTime(request.reviewed_at) }}
-            </div>
-            <div v-if="request.status === 'rejected' && request.reject_reason" class="alert alert-danger py-2 px-3 small mt-2">
-              <strong>Alasan Penolakan:</strong> {{ request.reject_reason }}
+            <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 mt-2">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kategori</span>
+              <StatusBadge :status="request.type" />
             </div>
           </div>
         </div>
 
-        <div class="modal-footer border-top border-secondary border-opacity-25 py-2">
-          <button type="button" class="btn btn-secondary btn-sm" @click="emit('close')">Tutup</button>
+        <!-- Dates & Duration Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Tanggal Mulai</span>
+            <div class="font-semibold text-slate-800 text-xs flex items-center gap-1.5">
+              <i class="bi bi-calendar-event text-blue-600"></i>
+              <span>{{ formatDate(request.start_date) }}</span>
+            </div>
+          </div>
+
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Tanggal Selesai</span>
+            <div class="font-semibold text-slate-800 text-xs flex items-center gap-1.5">
+              <i class="bi bi-calendar-check text-blue-600"></i>
+              <span>{{ formatDate(request.end_date) }}</span>
+            </div>
+          </div>
+
+          <div class="p-3 bg-blue-50/60 rounded-2xl border border-blue-100 flex flex-col justify-center">
+            <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider block mb-0.5">Durasi Cuti</span>
+            <div class="font-extrabold text-blue-700 text-base">
+              {{ request.total_days }} Hari Kerja
+            </div>
+          </div>
         </div>
+
+        <!-- Reason -->
+        <div>
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+            Alasan / Keterangan Pengajuan
+          </label>
+          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-slate-800 text-xs leading-relaxed whitespace-pre-wrap">
+            {{ request.reason }}
+          </div>
+        </div>
+
+        <!-- Attachment -->
+        <div v-if="request.attachment">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+            Dokumen Lampiran
+          </label>
+          <a 
+            :href="request.attachment" 
+            target="_blank" 
+            class="flex items-center justify-between p-3 rounded-2xl bg-blue-50/70 hover:bg-blue-100/70 border border-blue-200/80 text-blue-700 text-xs font-semibold transition-colors"
+          >
+            <div class="flex items-center gap-2.5 truncate">
+              <i class="bi bi-paperclip text-base"></i>
+              <span class="truncate">Surat Dokter / Bukti Pendukung</span>
+            </div>
+            <i class="bi bi-box-arrow-up-right text-xs shrink-0"></i>
+          </a>
+        </div>
+
+        <!-- Review Info (if reviewed) -->
+        <div v-if="request.reviewed_at" class="p-3.5 rounded-2xl border text-xs" :class="request.status === 'approved' ? 'bg-emerald-50/60 border-emerald-100 text-emerald-900' : 'bg-rose-50/60 border-rose-100 text-rose-900'">
+          <div class="font-bold flex items-center gap-1.5 mb-1">
+            <i :class="request.status === 'approved' ? 'bi bi-check-circle-fill text-emerald-600' : 'bi bi-x-circle-fill text-rose-600'"></i>
+            <span>{{ request.status === 'approved' ? 'Telah Disetujui' : 'Permohonan Ditolak' }}</span>
+          </div>
+          <div class="text-[11px] opacity-80">
+            Oleh: <strong>{{ request.reviewer?.name || 'HR Manager' }}</strong> pada {{ formatDateTime(request.reviewed_at) }}
+          </div>
+          <div v-if="request.status === 'rejected' && request.reject_reason" class="mt-2 p-2.5 bg-white/80 rounded-xl border border-rose-200 text-rose-800">
+            <strong>Alasan Penolakan:</strong> {{ request.reject_reason }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
+        <button 
+          type="button" 
+          class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-200 text-xs font-semibold transition-colors cursor-pointer" 
+          @click="emit('close')"
+        >
+          Tutup
+        </button>
       </div>
     </div>
   </div>
