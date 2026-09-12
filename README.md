@@ -1,58 +1,136 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Absensi Pro — Sistem Absensi Kerja Berbasis Web Mobile-Friendly
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Absensi Pro** adalah aplikasi sistem presensi kerja modern berbasis web yang dirancang dengan pendekatan *mobile-first*. Aplikasi ini memudahkan pegawai melakukan pencatatan kehadiran mandiri dari perangkat smartphone maupun komputer, sekaligus memberikan kendali penuh bagi tim HR / Administrator untuk mengelola jadwal kerja, meninjau pengajuan cuti, dan menindaklanjuti komplain presensi secara terpusat.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Fitur Utama
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 1. Untuk Pegawai
+- **Presensi Real-time & Validasi Radius GPS**:
+  - Jam digital real-time dengan penanggalan otomatis.
+  - Pengecekan lokasi akurat via GPS dengan formula *Haversine* (harus berada dalam radius maksimal 150 meter dari kantor untuk status Hadir).
+  - Pilihan status kehadiran: **Hadir**, **WFH**, **Izin**, dan **Sakit**.
+  - Pengambilan foto selfie via kamera perangkat saat check-in.
+  - Tombol aksi dinamis Check-in & Check-out yang ramah sentuhan layar HP.
+- **Riwayat Absensi**:
+  - Filter berdasarkan bulan dan tahun.
+  - Kartu ringkasan (*Total Hadir, Terlambat, Izin/Sakit/WFH, Absen*).
+  - Tombol cepat untuk mengajukan komplain langsung pada baris absensi terkait.
+- **Pengajuan Cuti / Izin / Sakit**:
+  - Formulir pengajuan cuti tahunan, sakit, izin pribadi, atau cuti darurat.
+  - Otomatis menghitung durasi hari kerja (mengecualikan hari Sabtu dan Minggu).
+  - Unggah berkas lampiran (surat dokter / formulir) format PDF atau foto.
+  - Pantau status pengajuan (*Menunggu, Disetujui, Ditolak*) serta opsi pembatalan mandiri jika masih berstatus pending.
+- **Komplain Presensi**:
+  - Laporkan kendala seperti waktu tidak sesuai, gagal lokasi GPS, lupa check-out, atau error sistem.
+  - Unggah bukti tangkapan layar (screenshot) dan pantau catatan tanggapan dari HR.
+- **Profil Pegawai**:
+  - Pengelolaan data diri, nomor kontak, dan ganti foto profil avatar.
+  - Penyimpanan rekening bank payroll dengan enkripsi keamanan (*Laravel Crypt*).
+  - Pembaruan kata sandi akun.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 2. Untuk Admin & HR
+- **Dashboard Monitoring**:
+  - Statistik harian pegawai yang hadir, terlambat, izin/WFH, dan belum absen.
+  - Indikator notifikasi pengajuan cuti dan komplain yang membutuhkan peninjauan.
+  - Daftar presensi harian seluruh pegawai dengan filter tanggal dan departemen.
+- **Manajemen Pegawai**:
+  - Tambah, edit, dan kelola data seluruh pegawai.
+  - Penugasan shift jadwal kerja.
+  - Nonaktifkan atau aktifkan akses akun pegawai.
+- **Pengaturan Jadwal Kerja (Shift)**:
+  - Kelola jam masuk, jam pulang, toleransi keterlambatan (menit), dan checklist hari kerja operasional.
+- **Monitoring & Koreksi Presensi**:
+  - Lihat foto selfie absensi dan koordinat pegawai.
+  - Koreksi manual waktu check-in, check-out, maupun status absensi pegawai.
+- **Verifikasi Pengajuan Cuti**:
+  - Setujui atau tolak pengajuan cuti (wajib alasan jika menolak).
+  - Saat disetujui, sistem **otomatis menyinkronkan data presensi pegawai** pada rentang tanggal cuti tersebut.
+- **Penanganan Komplain**:
+  - Buka detail keluhan pegawai melalui offcanvas drawer.
+  - Berikan tanggapan admin dan selesaikan komplain (bisa langsung sekaligus mengoreksi data absensi terkait).
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Cara Penggunaan
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 1. Instalasi & Menjalankan Aplikasi
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+Jika baru pertama kali menyalin/clone repositori ini:
 
-## Agentic Development
+1. **Pasang Dependensi Backend & Frontend**:
+   ```bash
+   composer install
+   npm install
+   ```
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+2. **Salin File Konfigurasi Lingkungan**:
+   ```bash
+   cp .env.example .env
+   ```
+   Pastikan koneksi database MySQL pada file `.env` sudah sesuai (misal: database `absensi_app`).
 
-```bash
-composer require laravel/boost --dev
+3. **Generate App Key & Database Setup**:
+   ```bash
+   php artisan key:generate
+   php artisan migrate --seed
+   php artisan storage:link
+   ```
 
-php artisan boost:install
-```
+4. **Build Frontend**:
+   ```bash
+   npm run build
+   # atau untuk mode pengembangan: npm run dev
+   ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+5. **Jalankan Server**:
+   ```bash
+   php artisan serve
+   ```
+   Akses aplikasi melalui browser di: **`http://localhost:8000`**.
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 2. Akun Demo & Kredensial Masuk
 
-## Code of Conduct
+Pada halaman login (`http://localhost:8000/login`), tersedia tombol **Akses Cepat Demo (1-Klik)**:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+| Peran | Email | Kata Sandi | Deskripsi Akses |
+| :--- | :--- | :--- | :--- |
+| **Admin HR** | `admin@absensi.com` | `password` | Mengelola data pegawai, shift, menyetujui cuti, dan menindaklanjuti komplain |
+| **Pegawai** | `budi@absensi.com` | `password` | Melakukan check-in/out, cek riwayat, mengajukan izin/cuti, dan komplain |
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 3. Alur Penggunaan Aplikasi
 
-## License
+#### A. Melakukan Presensi (Pegawai)
+1. Masuk menggunakan akun pegawai.
+2. Buka menu **Absen** (halaman utama).
+3. Izinkan browser mengakses **Lokasi GPS** dan **Kamera**.
+4. Pilih status kehadiran (*Hadir*, *WFH*, *Izin*, atau *Sakit*).
+5. Masukkan catatan (opsional) atau ambil foto selfie kamera (opsional).
+6. Klik tombol **Check-in Sekarang**. Jika memilih status *Hadir*, pastikan berada dalam radius 150 meter dari kantor.
+7. Saat jam pulang tiba, buka kembali halaman absensi dan klik tombol **Check-out Pulang**.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+#### B. Mengajukan Cuti atau Izin (Pegawai)
+1. Dari menu navigasi, pilih **Pengajuan**.
+2. Klik tombol **Buat Pengajuan Baru**.
+3. Pilih jenis pengajuan (*Cuti Tahunan, Sakit, Izin, Cuti Darurat*).
+4. Tentukan tanggal mulai dan selesai (durasi hari kerja otomatis dihitung tanpa hari libur akhir pekan).
+5. Tuliskan alasan dan unggah lampiran surat/bukti (jika ada).
+6. Klik **Kirimkan Pengajuan ke HR**.
+
+#### C. Mengajukan Komplain Presensi (Pegawai)
+1. Buka menu **Komplain** (atau klik tombol **Komplain** langsung di baris menu **Riwayat**).
+2. Pilih tanggal kejadian dan kategori kendala yang dialami.
+3. Tuliskan penjelasan kendala dan lampirkan bukti tangkapan layar jika ada.
+4. Klik **Kirimkan Komplain ke HR**.
+
+#### D. Pengelolaan oleh HR / Admin
+1. Masuk menggunakan akun admin.
+2. Pada **Dashboard**, pantau statistik kehadiran hari ini serta badge notifikasi untuk pengajuan cuti dan komplain baru.
+3. Masuk ke menu **Pengajuan Cuti** untuk meninjau detail permohonan staf, lalu klik **Setujui** (absensi otomatis terisi) atau **Tolak** dengan alasan.
+4. Masuk ke menu **Komplain Absensi**, klik **Tinjau & Tindak** pada komplain staf untuk memberikan tanggapan dan melakukan koreksi data presensi jika diperlukan.
+5. Gunakan menu **Data Pegawai** dan **Jadwal Kerja** untuk mengelola staf dan shift kerja perusahaan.
