@@ -1,0 +1,217 @@
+$body-bg: #0f1117;
+$body-color: #e2e8f0;
+$primary: #6366f1;
+$border-color: #2d2d3a;
+
+@import "bootstrap/scss/bootstrap";
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+:root[data-bs-theme="dark"] {
+  --bs-body-bg: #0f1117;
+  --bs-secondary-bg: #1a1a2e;
+  --bs-tertiary-bg: #16213e;
+  --bs-border-color: #2d2d3a;
+}
+
+/* Badge status absensi */
+.badge-present    { background-color: #22c55e !important; color: #fff; }
+.badge-late       { background-color: #f59e0b !important; color: #fff; }
+.badge-absent     { background-color: #ef4444 !important; color: #fff; }
+.badge-sick       { background-color: #3b82f6 !important; color: #fff; }
+.badge-permission { background-color: #a855f7 !important; color: #fff; }
+.badge-wfh        { background-color: #14b8a6 !important; color: #fff; }
+
+/* Badge status pengajuan & komplain */
+.badge-pending    { background-color: #f59e0b !important; color: #fff; }
+.badge-approved   { background-color: #22c55e !important; color: #fff; }
+.badge-rejected   { background-color: #ef4444 !important; color: #fff; }
+.badge-in_review  { background-color: #6366f1 !important; color: #fff; }
+.badge-resolved   { background-color: #22c55e !important; color: #fff; }
+
+/* Mobile Bottom Navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: #1a1a2e;
+  border-top: 1px solid #2d2d3a;
+  z-index: 1030;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+  min-width: 58px;
+}
+
+.bottom-nav-item:hover,
+.bottom-nav-item.active {
+  color: #818cf8;
+}
+
+.bottom-nav-item i {
+  font-size: 1.25rem;
+  margin-bottom: 2px;
+}
+
+.bottom-nav-item .badge-dot {
+  position: absolute;
+  top: 4px;
+  right: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ef4444;
+}
+
+/* Sidebar styling for desktop */
+.sidebar-wrapper {
+  width: 260px;
+  min-height: 100vh;
+  background: #1a1a2e;
+  border-right: 1px solid #2d2d3a;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1020;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  padding: 20px 24px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #2d2d3a;
+}
+
+.sidebar-nav {
+  padding: 16px 12px;
+}
+
+.sidebar-nav .nav-link {
+  color: #94a3b8;
+  padding: 10px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  transition: all 0.2s ease;
+}
+
+.sidebar-nav .nav-link:hover,
+.sidebar-nav .nav-link.active {
+  color: #fff;
+  background-color: rgba(99, 102, 241, 0.15);
+}
+
+.sidebar-nav .nav-link.active {
+  color: #818cf8;
+  font-weight: 600;
+}
+
+.sidebar-nav .nav-link i {
+  font-size: 1.15rem;
+}
+
+.main-content {
+  margin-left: 260px;
+  min-height: 100vh;
+  padding-bottom: 32px;
+}
+
+@media (max-width: 767.98px) {
+  .sidebar-wrapper {
+    display: none !important;
+  }
+  .main-content {
+    margin-left: 0 !important;
+    padding-bottom: 84px !important;
+  }
+}
+
+/* Mobile full width action buttons */
+.btn-mobile-lg {
+  min-height: 56px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+}
+
+/* Card aesthetics */
+.card {
+  border-color: #2d2d3a;
+  background-color: #1a1a2e;
+  border-radius: 12px;
+}
+
+.card-header {
+  background-color: rgba(255, 255, 255, 0.02);
+  border-bottom-color: #2d2d3a;
+  padding: 14px 18px;
+}
+
+.modal-content {
+  background-color: #1a1a2e;
+  border: 1px solid #2d2d3a;
+  border-radius: 14px;
+}
+
+.offcanvas {
+  background-color: #1a1a2e;
+  border-left: 1px solid #2d2d3a;
+}
+
+.form-control, .form-select {
+  background-color: #0f1117;
+  border-color: #2d2d3a;
+  color: #e2e8f0;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: #121520;
+  border-color: #6366f1;
+  color: #fff;
+  box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+}
+
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-color: #e2e8f0;
+  --bs-table-border-color: #2d2d3a;
+}
+
+.badge {
+  padding: 6px 10px;
+  font-weight: 600;
+  font-size: 0.78rem;
+  border-radius: 6px;
+}

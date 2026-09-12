@@ -1,0 +1,115 @@
+# ==========================================
+# ENVIRONMENT & SENSITIVE SECRETS (CRITICAL)
+# ==========================================
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.crt
+*.pfx
+*.p12
+*.cer
+id_rsa*
+id_ed25519*
+auth.json
+oauth-*.key
+
+# ==========================================
+# STORAGE & USER UPLOADS / SENSITIVE DATA
+# ==========================================
+/public/storage
+/public/hot
+/storage/*.key
+/storage/oauth-*.key
+/storage/pail
+/storage/logs/*
+!/storage/logs/.gitignore
+/storage/framework/cache/*
+!/storage/framework/cache/.gitignore
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+/storage/app/*
+!/storage/app/.gitignore
+/storage/app/public/*
+!/storage/app/public/.gitignore
+
+# User Upload Folders (Selfies, Avatars, Medical Attachments, Screenshots)
+/storage/app/public/selfies/*
+!/storage/app/public/selfies/.gitignore
+/storage/app/public/avatars/*
+!/storage/app/public/avatars/.gitignore
+/storage/app/public/attachments/*
+!/storage/app/public/attachments/.gitignore
+
+# ==========================================
+# LOGS & TEMPORARY FILES
+# ==========================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==========================================
+# DATABASE & BACKUPS
+# ==========================================
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db
+/database/*.sqlite
+/database/*.sqlite-wal
+/database/*.sqlite-shm
+*.sql
+*.sql.gz
+*.bak
+*.backup
+
+# ==========================================
+# DEPENDENCIES & COMPILED ASSETS
+# ==========================================
+/vendor
+/node_modules
+/public/build
+/public/fonts-manifest.dev.json
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+.phpactor.json
+
+# ==========================================
+# TESTING & CACHES
+# ==========================================
+.phpunit.result.cache
+/.phpunit.cache
+
+# ==========================================
+# OS & SYSTEM FILES
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ==========================================
+# IDE & EDITOR SETTINGS
+# ==========================================
+/.idea
+/.vscode
+/.cursor/
+/.codex
+/.nova
+/.zed
+/.gemini
+*.sublime-project
+*.sublime-workspace
+Homestead.json
+Homestead.yaml
