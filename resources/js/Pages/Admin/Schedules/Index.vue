@@ -93,11 +93,26 @@ const submit = () => {
   }
 };
 
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+
 const deleteForm = useForm({});
-const deleteSchedule = (schedule) => {
-  if (confirm(`Apakah Anda yakin ingin menghapus jadwal "${schedule.name}"?`)) {
-    deleteForm.delete(route('admin.schedules.destroy', schedule.id));
-  }
+const showDeleteModal = ref(false);
+const scheduleToDelete = ref(null);
+
+const openDeleteModal = (schedule) => {
+  scheduleToDelete.value = schedule;
+  showDeleteModal.value = true;
+};
+
+const confirmDelete = () => {
+  if (!scheduleToDelete.value) return;
+  deleteForm.delete(route('admin.schedules.destroy', scheduleToDelete.value.id), {
+    preserveScroll: true,
+    onSuccess: () => {
+      showDeleteModal.value = false;
+      scheduleToDelete.value = null;
+    },
+  });
 };
 
 const formatDays = (daysArray) => {
@@ -226,7 +241,7 @@ const formatDays = (daysArray) => {
                         v-if="s.employee_schedules_count === 0" 
                         type="button" 
                         class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer"
-                        @click="deleteSchedule(s)"
+                        @click="openDeleteModal(s)"
                       >
                         <i class="bi bi-trash"></i> Hapus
                       </button>
@@ -392,5 +407,18 @@ const formatDays = (daysArray) => {
         </form>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <ConfirmModal 
+      :show="showDeleteModal"
+      title="Hapus Shift Kerja?"
+      :message="scheduleToDelete ? `Apakah Anda yakin ingin menghapus jadwal shift '${scheduleToDelete.name}'? Shift ini tidak lagi dapat digunakan oleh pegawai.` : ''"
+      confirm-text="Ya, Hapus"
+      cancel-text="Batal"
+      type="danger"
+      :loading="deleteForm.processing"
+      @close="showDeleteModal = false"
+      @confirm="confirmDelete"
+    />
   </AdminLayout>
 </template>

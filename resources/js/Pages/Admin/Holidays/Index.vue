@@ -46,12 +46,30 @@ const submit = () => {
   });
 };
 
-const deleteHoliday = (holiday) => {
-  if (confirm(`Hapus hari libur "${holiday.name}" (${holiday.date}) dari kalender?`)) {
-    router.delete(route('admin.holidays.destroy', holiday.id), {
-      preserveScroll: true,
-    });
-  }
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+
+const showDeleteModal = ref(false);
+const holidayToDelete = ref(null);
+const isDeleting = ref(false);
+
+const openDelete = (holiday) => {
+  holidayToDelete.value = holiday;
+  showDeleteModal.value = true;
+};
+
+const confirmDelete = () => {
+  if (!holidayToDelete.value) return;
+  isDeleting.value = true;
+  router.delete(route('admin.holidays.destroy', holidayToDelete.value.id), {
+    preserveScroll: true,
+    onSuccess: () => {
+      showDeleteModal.value = false;
+      holidayToDelete.value = null;
+    },
+    onFinish: () => {
+      isDeleting.value = false;
+    },
+  });
 };
 
 const isUpcoming = (dateStr) => {
@@ -174,7 +192,7 @@ const getMonthShort = (dateStr) => {
             <!-- Delete Action -->
             <button
               type="button"
-              @click="deleteHoliday(holiday)"
+              @click="openDelete(holiday)"
               class="w-9 h-9 rounded-xl border border-slate-200 text-rose-500 hover:text-white hover:bg-rose-600 hover:border-rose-600 flex items-center justify-center transition shadow-xs cursor-pointer"
               title="Hapus Hari Libur"
             >
@@ -260,5 +278,18 @@ const getMonthShort = (dateStr) => {
         </form>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <ConfirmModal 
+      :show="showDeleteModal"
+      title="Hapus Hari Libur?"
+      :message="holidayToDelete ? `Hapus hari libur '${holidayToDelete.name}' (${holidayToDelete.date}) dari kalender perusahaan?` : ''"
+      confirm-text="Ya, Hapus Libur"
+      cancel-text="Batal"
+      type="danger"
+      :loading="isDeleting"
+      @close="showDeleteModal = false"
+      @confirm="confirmDelete"
+    />
   </AdminLayout>
 </template>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
@@ -25,12 +25,17 @@ const applyFilter = () => {
   }, { preserveState: true });
 };
 
-// Offcanvas drawer
-const selectedComplaint = ref(null);
+// Offcanvas drawer synced reactively
+const selectedComplaintId = ref(null);
 const showOffcanvas = ref(false);
 
+const selectedComplaint = computed(() => {
+  if (!selectedComplaintId.value) return null;
+  return props.complaints.find(c => c.id === selectedComplaintId.value) || null;
+});
+
 const openOffcanvas = (c) => {
-  selectedComplaint.value = c;
+  selectedComplaintId.value = c.id;
   showOffcanvas.value = true;
 };
 
@@ -167,12 +172,22 @@ const formatDate = (dateStr) => {
                 </td>
                 <td class="py-3 px-4 text-right whitespace-nowrap">
                   <button 
+                    v-if="c.status === 'pending' || c.status === 'in_review'"
                     type="button" 
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors cursor-pointer"
                     @click="openOffcanvas(c)"
                   >
                     <i class="bi bi-layout-sidebar-reverse"></i>
                     <span>Tinjau & Tindak</span>
+                  </button>
+                  <button 
+                    v-else
+                    type="button" 
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+                    @click="openOffcanvas(c)"
+                  >
+                    <i class="bi bi-eye"></i>
+                    <span>Detail</span>
                   </button>
                 </td>
               </tr>
@@ -214,12 +229,22 @@ const formatDate = (dateStr) => {
                 <span v-else class="text-[11px] text-slate-400">Tanpa lampiran</span>
               </div>
               <button 
+                v-if="c.status === 'pending' || c.status === 'in_review'"
                 type="button" 
-                class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+                class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors cursor-pointer"
                 @click="openOffcanvas(c)"
               >
                 <i class="bi bi-layout-sidebar-reverse"></i>
                 <span>Tinjau</span>
+              </button>
+              <button 
+                v-else
+                type="button" 
+                class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+                @click="openOffcanvas(c)"
+              >
+                <i class="bi bi-eye"></i>
+                <span>Detail</span>
               </button>
             </div>
           </div>

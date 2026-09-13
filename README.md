@@ -4,7 +4,7 @@
   <img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="220" alt="Laravel Logo" />
 </p>
 
-**HRIS (Human Resource Information System)** adalah platform manajemen sumber daya manusia dan presensi modern berbasis web dengan arsitektur SPA (*Single Page Application*) yang dibangun menggunakan **Laravel 11**, **Inertia.js (Vue 3)**, dan **Tailwind CSS**.
+**HRIS (Human Resource Information System)** adalah platform manajemen sumber daya manusia dan presensi modern berbasis web dengan arsitektur SPA (*Single Page Application*) yang dibangun menggunakan **Laravel 13**, **Inertia.js (Vue 3)**, dan **Tailwind CSS**.
 
 Aplikasi dirancang dengan pendekatan *mobile-friendly* dan estetika minimalis modern (*clean white base*, *royal blue accent*, dan *slate typography*), memberikan kemudahan pencatatan kehadiran mandiri bagi pegawai serta kendali komprehensif bagi tim HRD dalam mengelola data pegawai, jadwal shift, geofencing kantor, rekapitulasi laporan, notifikasi, hingga kalkulasi payroll otomatis.
 
@@ -76,7 +76,7 @@ Aplikasi dirancang dengan pendekatan *mobile-friendly* dan estetika minimalis mo
 
 | Komponen | Teknologi |
 | :--- | :--- |
-| **Backend Framework** | [Laravel 11](https://laravel.com/) (PHP 8.3) |
+| **Backend Framework** | [Laravel 13](https://laravel.com/) (PHP 8.3) |
 | **Client-Server Bridge** | [Inertia.js v2](https://inertiajs.com/) |
 | **Frontend Library** | [Vue 3](https://vuejs.org/) (Composition API, `<script setup>`) |
 | **Styling & CSS** | [Tailwind CSS](https://tailwindcss.com/) & Bootstrap Icons |
@@ -84,10 +84,32 @@ Aplikasi dirancang dengan pendekatan *mobile-friendly* dan estetika minimalis mo
 | **Database** | MySQL 8.x |
 | **Role & Permission** | [Spatie Laravel Permission](https://spatie.be/docs/laravel-permission) |
 | **Asset Bundler** | [Vite](https://vitejs.dev/) |
+| **Containerization** | Docker & Docker Compose (Nginx, PHP-FPM, MySQL 8, phpMyAdmin) |
 
 ---
 
-## 📦 Panduan Instalasi & Menjalankan Aplikasi
+## 🐳 Panduan Menjalankan via Docker (Direkomendasikan)
+
+Jika Anda ingin menjalankan aplikasi secara terisolasi menggunakan Docker & Docker Compose:
+
+```bash
+# 1. Salin konfigurasi Docker environment
+cp .env.docker.example .env
+
+# 2. Bangun dan jalankan seluruh container
+docker compose up -d --build
+
+# 3. Jalankan migrasi dan seeder dummy data
+docker compose exec app php artisan migrate:fresh --seed
+```
+
+- Akses aplikasi web di **`http://localhost:8000`**
+- Akses GUI database phpMyAdmin di **`http://localhost:8080`**
+- Panduan lengkap pengelolaan Docker dapat dilihat di file [DOCKER.md](DOCKER.md).
+
+---
+
+## 📦 Panduan Instalasi Manual (Tanpa Docker)
 
 Pastikan sistem Anda telah terpasang **PHP >= 8.2**, **Composer**, **Node.js >= 18**, dan **MySQL**.
 

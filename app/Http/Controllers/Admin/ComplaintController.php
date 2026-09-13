@@ -57,6 +57,10 @@ class ComplaintController extends Controller
 
     public function updateStatus(Request $request, Complaint $complaint)
     {
+        if ($complaint->status !== 'pending') {
+            return back()->with('error', 'Komplain ini sudah ditinjau atau telah diproses sebelumnya.');
+        }
+
         $validated = $request->validate([
             'status' => 'required|in:in_review',
         ]);
@@ -70,6 +74,10 @@ class ComplaintController extends Controller
 
     public function resolve(Request $request, Complaint $complaint)
     {
+        if (in_array($complaint->status, ['resolved', 'rejected'])) {
+            return back()->with('error', 'Komplain ini sudah selesai diproses dan tidak dapat diubah kembali.');
+        }
+
         $validated = $request->validate([
             'admin_note' => 'required|string|min:5|max:1000',
             // Optional direct correction of attendance
@@ -136,6 +144,10 @@ class ComplaintController extends Controller
 
     public function reject(Request $request, Complaint $complaint)
     {
+        if (in_array($complaint->status, ['resolved', 'rejected'])) {
+            return back()->with('error', 'Komplain ini sudah selesai diproses dan tidak dapat diubah kembali.');
+        }
+
         $validated = $request->validate([
             'admin_note' => 'required|string|min:5|max:1000',
         ]);

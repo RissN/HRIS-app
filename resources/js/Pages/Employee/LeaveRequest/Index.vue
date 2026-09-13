@@ -4,9 +4,11 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import EmployeeLayout from '@/Layouts/EmployeeLayout.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import LeaveRequestModal from '@/Components/LeaveRequestModal.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
 const props = defineProps({
   leaveRequests: Array,
+  leaveBalance: Object,
 });
 
 const selectedRequest = ref(null);
@@ -18,13 +20,23 @@ const openDetail = (item) => {
 };
 
 const cancelForm = useForm({});
+const showCancelModal = ref(false);
+const cancellingItem = ref(null);
 
-const cancelRequest = (item) => {
-  if (confirm('Apakah Anda yakin ingin membatalkan pengajuan ini?')) {
-    cancelForm.delete(route('employee.leave-requests.cancel', item.id), {
-      preserveScroll: true,
-    });
-  }
+const openCancel = (item) => {
+  cancellingItem.value = item;
+  showCancelModal.value = true;
+};
+
+const confirmCancel = () => {
+  if (!cancellingItem.value) return;
+  cancelForm.delete(route('employee.leave-requests.cancel', cancellingItem.value.id), {
+    preserveScroll: true,
+    onSuccess: () => {
+      showCancelModal.value = false;
+      cancellingItem.value = null;
+    },
+  });
 };
 
 const formatDate = (dateStr) => {
@@ -53,6 +65,53 @@ const formatDate = (dateStr) => {
             <i class="bi bi-plus-circle text-sm"></i>
             <span>Buat Pengajuan Baru</span>
           </Link>
+        </div>
+      </div>
+
+      <!-- Leave Balance Overview Cards -->
+      <div v-if="leaveBalance" class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Hak Cuti Tahunan</span>
+            <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm">
+              <i class="bi bi-calendar-check"></i>
+            </span>
+          </div>
+          <div class="mt-2 text-2xl font-bold text-slate-900 font-mono">{{ leaveBalance.quota }} <span class="text-xs font-normal text-slate-400">Hari</span></div>
+          <p class="text-[11px] text-slate-400 mt-0.5">Tahun {{ leaveBalance.year }}</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Cuti Terpakai</span>
+            <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm">
+              <i class="bi bi-calendar2-minus"></i>
+            </span>
+          </div>
+          <div class="mt-2 text-2xl font-bold text-amber-600 font-mono">{{ leaveBalance.used }} <span class="text-xs font-normal text-slate-400">Hari</span></div>
+          <p class="text-[11px] text-slate-400 mt-0.5">Disetujui HR</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Menunggu Review</span>
+            <span class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-sm">
+              <i class="bi bi-hourglass-split"></i>
+            </span>
+          </div>
+          <div class="mt-2 text-2xl font-bold text-purple-600 font-mono">{{ leaveBalance.pending }} <span class="text-xs font-normal text-slate-400">Hari</span></div>
+          <p class="text-[11px] text-slate-400 mt-0.5">Dalam proses</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50/40 p-4 shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-blue-900">Sisa Kuota Cuti</span>
+            <span class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm shadow-xs shadow-blue-600/30">
+              <i class="bi bi-shield-check"></i>
+            </span>
+          </div>
+          <div class="mt-2 text-2xl font-bold text-blue-600 font-mono">{{ leaveBalance.available }} <span class="text-xs font-normal text-slate-400">Hari</span></div>
+          <p class="text-[11px] text-blue-600/80 mt-0.5 font-medium">Dapat diajukan</p>
         </div>
       </div>
 
@@ -89,7 +148,7 @@ const formatDate = (dateStr) => {
                   v-if="item.status === 'pending'" 
                   type="button" 
                   class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors"
-                  @click="cancelRequest(item)"
+                  @click="openCancel(item)"
                 >
                   <i class="bi bi-x-circle mr-1"></i> Batalkan
                 </button>
@@ -131,10 +190,10 @@ const formatDate = (dateStr) => {
                       <button 
                         v-if="item.status === 'pending'" 
                         type="button" 
-                        class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer"
-                        @click="cancelRequest(item)"
+                        class="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer"
+                        @click="openCancel(item)"
                       >
-                        <i class="bi bi-x-circle"></i> Batal
+                        Batalkan
                       </button>
                     </div>
                   </td>
@@ -157,6 +216,19 @@ const formatDate = (dateStr) => {
       :show="showModal" 
       :request="selectedRequest" 
       @close="showModal = false" 
+    />
+
+    <!-- Cancel Confirmation Modal -->
+    <ConfirmModal 
+      :show="showCancelModal"
+      title="Batalkan Pengajuan Cuti?"
+      message="Apakah Anda yakin ingin membatalkan permohonan cuti / izin ini? Tindakan ini tidak dapat dibatalkan."
+      confirm-text="Ya, Batalkan"
+      cancel-text="Kembali"
+      type="warning"
+      :loading="cancelForm.processing"
+      @close="showCancelModal = false"
+      @confirm="confirmCancel"
     />
   </EmployeeLayout>
 </template>

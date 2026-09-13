@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\EmployeeSchedule;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\WorkSchedule;
 use Illuminate\Http\Request;
@@ -26,7 +27,7 @@ class EmployeeController extends Controller
         if ($search) {
             $query->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             })->orWhere('position', 'like', "%{$search}%");
         }
 
@@ -44,6 +45,7 @@ class EmployeeController extends Controller
                 'position' => $employee->position,
                 'department' => $employee->department,
                 'joined_date' => $employee->joined_date?->format('Y-m-d'),
+                'annual_leave_quota' => (int) ($employee->annual_leave_quota ?? 12),
                 'is_active' => $employee->user->is_active,
                 'current_schedule' => $employee->currentSchedule()?->name ?? 'Belum Diatur',
                 'avatar' => $employee->avatar,
@@ -65,9 +67,11 @@ class EmployeeController extends Controller
     public function create(): Response
     {
         $schedules = WorkSchedule::all();
+        $defaultQuota = (int) Setting::get('default_annual_leave_quota', '12');
 
         return Inertia::render('Admin/Employees/Create', [
             'schedules' => $schedules,
+            'defaultAnnualLeaveQuota' => $defaultQuota,
         ]);
     }
 
@@ -80,6 +84,7 @@ class EmployeeController extends Controller
             'phone' => 'nullable|string|max:20',
             'position' => 'required|string|max:100',
             'department' => 'required|string|max:100',
+            'annual_leave_quota' => 'nullable|integer|min:0|max:365',
             'bank_name' => 'nullable|string|max:100',
             'account_number' => 'nullable|string|max:50',
             'joined_date' => 'required|date',
@@ -97,11 +102,14 @@ class EmployeeController extends Controller
         $pegawaiRole = Role::firstOrCreate(['name' => 'pegawai', 'guard_name' => 'web']);
         $user->assignRole($pegawaiRole);
 
+        $defaultQuota = (int) Setting::get('default_annual_leave_quota', '12');
+
         $employee = Employee::create([
             'user_id' => $user->id,
             'phone' => $validated['phone'],
             'position' => $validated['position'],
             'department' => $validated['department'],
+            'annual_leave_quota' => $validated['annual_leave_quota'] ?? $defaultQuota,
             'bank_name' => $validated['bank_name'],
             'account_number' => $validated['account_number'],
             'joined_date' => $validated['joined_date'],
@@ -131,6 +139,7 @@ class EmployeeController extends Controller
                 'phone' => $employee->phone,
                 'position' => $employee->position,
                 'department' => $employee->department,
+                'annual_leave_quota' => (int) ($employee->annual_leave_quota ?? 12),
                 'bank_name' => $employee->bank_name,
                 'account_number' => $employee->account_number,
                 'joined_date' => $employee->joined_date?->format('Y-m-d'),
@@ -152,6 +161,7 @@ class EmployeeController extends Controller
             'phone' => 'nullable|string|max:20',
             'position' => 'required|string|max:100',
             'department' => 'required|string|max:100',
+            'annual_leave_quota' => 'required|integer|min:0|max:365',
             'bank_name' => 'nullable|string|max:100',
             'account_number' => 'nullable|string|max:50',
             'joined_date' => 'required|date',
@@ -165,7 +175,7 @@ class EmployeeController extends Controller
             'is_active' => $validated['is_active'],
         ];
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $userData['password'] = Hash::make($validated['password']);
         }
 
@@ -175,6 +185,7 @@ class EmployeeController extends Controller
             'phone' => $validated['phone'],
             'position' => $validated['position'],
             'department' => $validated['department'],
+            'annual_leave_quota' => $validated['annual_leave_quota'],
             'bank_name' => $validated['bank_name'],
             'account_number' => $validated['account_number'],
             'joined_date' => $validated['joined_date'],
@@ -182,7 +193,7 @@ class EmployeeController extends Controller
 
         // Check if schedule changed
         $currentSchedule = $employee->currentSchedule();
-        if (!$currentSchedule || $currentSchedule->id != $validated['schedule_id']) {
+        if (! $currentSchedule || $currentSchedule->id != $validated['schedule_id']) {
             EmployeeSchedule::create([
                 'employee_id' => $employee->id,
                 'schedule_id' => $validated['schedule_id'],
@@ -197,9 +208,10 @@ class EmployeeController extends Controller
     public function toggleStatus(Employee $employee)
     {
         $user = $employee->user;
-        $user->update(['is_active' => !$user->is_active]);
+        $user->update(['is_active' => ! $user->is_active]);
 
         $statusText = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+
         return back()->with('success', "Akun pegawai berhasil {$statusText}.");
     }
 }

@@ -113,15 +113,15 @@ class ReportController extends Controller
                 fputcsv($file, [
                     $no++,
                     $record->date ? Carbon::parse($record->date)->translatedFormat('d-m-Y') : '-',
-                    $record->employee?->nik ?? '-',
-                    $record->employee?->user?->name ?? '-',
-                    $record->employee?->department ?? '-',
-                    $record->employee?->position ?? '-',
+                    $this->escapeCsvValue($record->employee?->nik ?? '-'),
+                    $this->escapeCsvValue($record->employee?->user?->name ?? '-'),
+                    $this->escapeCsvValue($record->employee?->department ?? '-'),
+                    $this->escapeCsvValue($record->employee?->position ?? '-'),
                     $record->check_in_at ? Carbon::parse($record->check_in_at)->format('H:i') : '-',
                     $record->check_out_at ? Carbon::parse($record->check_out_at)->format('H:i') : '-',
                     $statusLabel,
                     $record->late_minutes ?? 0,
-                    $record->note ?? '-',
+                    $this->escapeCsvValue($record->note ?? '-'),
                 ]);
             }
 
@@ -159,5 +159,17 @@ class ReportController extends Controller
         }
 
         return $query;
+    }
+
+    /**
+     * Escape a CSV cell value to prevent formula injection in spreadsheet software.
+     */
+    private function escapeCsvValue(string $value): string
+    {
+        if (in_array($value[0] ?? '', ['=', '+', '-', '@', "\t", "\r"], true)) {
+            return "\t".$value;
+        }
+
+        return $value;
     }
 }

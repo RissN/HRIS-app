@@ -16,6 +16,7 @@ const form = useForm({
   rate_daily_allowance: props.settings.rate_daily_allowance || '50000',
   rate_late_deduction: props.settings.rate_late_deduction || '25000',
   rate_absent_deduction: props.settings.rate_absent_deduction || '100000',
+  default_annual_leave_quota: props.settings.default_annual_leave_quota || '12',
 });
 
 const isLocating = ref(false);
@@ -152,6 +153,10 @@ const submit = () => {
   }
   if (!form.office_radius || form.office_radius < 10) {
     form.setError('office_radius', 'Radius minimal adalah 10 meter');
+    hasError = true;
+  }
+  if (!form.default_annual_leave_quota || form.default_annual_leave_quota < 1 || form.default_annual_leave_quota > 365) {
+    form.setError('default_annual_leave_quota', 'Kuota cuti tahunan minimal 1 hari dan maksimal 365 hari');
     hasError = true;
   }
 
@@ -389,6 +394,40 @@ const formatRupiah = (val) => {
                   <span class="text-slate-600">Denda Alpa:</span>
                   <span class="font-bold text-rose-600 font-mono">{{ formatRupiah(form.rate_absent_deduction) }}</span>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Annual Leave Quota Policy -->
+          <div class="bg-white rounded-3xl border border-slate-100 p-5 sm:p-6 shadow-xs">
+            <div class="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100">
+              <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg">
+                <i class="bi bi-calendar2-check-fill"></i>
+              </div>
+              <div>
+                <h2 class="font-bold text-slate-900 text-base">Kuota Cuti Tahunan</h2>
+                <p class="text-xs text-slate-500">Standar hak cuti tahunan pegawai</p>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Kuota Standar (Hari / Tahun)
+                </label>
+                <div class="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    max="365"
+                    v-model="form.default_annual_leave_quota"
+                    class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl px-3.5 py-2 text-sm text-slate-800 transition font-mono"
+                    :class="{ 'border-rose-400 bg-rose-50/50': form.errors.default_annual_leave_quota }"
+                  />
+                  <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">Hari</span>
+                </div>
+                <p v-if="form.errors.default_annual_leave_quota" class="mt-1 text-xs text-rose-600">{{ form.errors.default_annual_leave_quota }}</p>
+                <p class="text-[11px] text-slate-400 mt-1">Standar UU Ketenagakerjaan No. 13/2003 adalah 12 hari kerja per tahun.</p>
               </div>
             </div>
           </div>

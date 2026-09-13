@@ -21,6 +21,7 @@ class SettingController extends Controller
             'rate_daily_allowance' => Setting::get('rate_daily_allowance', '50000'),
             'rate_late_deduction' => Setting::get('rate_late_deduction', '25000'),
             'rate_absent_deduction' => Setting::get('rate_absent_deduction', '100000'),
+            'default_annual_leave_quota' => Setting::get('default_annual_leave_quota', '12'),
         ];
 
         return Inertia::render('Admin/Settings/Index', [
@@ -41,6 +42,7 @@ class SettingController extends Controller
             'rate_daily_allowance' => 'required|numeric|min:0',
             'rate_late_deduction' => 'required|numeric|min:0',
             'rate_absent_deduction' => 'required|numeric|min:0',
+            'default_annual_leave_quota' => 'required|integer|min:1|max:365',
         ]);
 
         foreach ($validated as $key => $value) {

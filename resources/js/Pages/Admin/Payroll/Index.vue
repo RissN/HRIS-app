@@ -12,8 +12,15 @@ const props = defineProps({
 });
 
 const selectedMonth = ref(props.month || new Date().toISOString().slice(0, 7));
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+
 const isGenerating = ref(false);
+const isPaying = ref(false);
 const activePayslip = ref(null);
+
+const showGenerateModal = ref(false);
+const showPaidModal = ref(false);
+const payrollToPay = ref(null);
 
 const changeMonth = () => {
   router.get(route('admin.payroll.index'), {
@@ -21,26 +28,43 @@ const changeMonth = () => {
   }, { preserveState: true });
 };
 
-const generatePayroll = () => {
-  if (confirm(`Hitung kalkulasi payroll otomatis untuk semua pegawai aktif periode ${selectedMonth.value}? Data draft yang belum dibayar akan diperbarui berdasarkan presensi terkini.`)) {
-    isGenerating.value = true;
-    router.post(route('admin.payroll.generate'), {
-      month: selectedMonth.value,
-    }, {
-      preserveScroll: true,
-      onFinish: () => {
-        isGenerating.value = false;
-      },
-    });
-  }
+const openGenerateModal = () => {
+  showGenerateModal.value = true;
 };
 
-const markAsPaid = (payroll) => {
-  if (confirm(`Tandai pembayaran gaji ${payroll.employee?.user?.name} periode ${payroll.month} sebagai LUNAS? Notifikasi akan otomatis dikirimkan ke pegawai.`)) {
-    router.post(route('admin.payroll.paid', payroll.id), {}, {
-      preserveScroll: true,
-    });
-  }
+const confirmGenerate = () => {
+  isGenerating.value = true;
+  router.post(route('admin.payroll.generate'), {
+    month: selectedMonth.value,
+  }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      showGenerateModal.value = false;
+    },
+    onFinish: () => {
+      isGenerating.value = false;
+    },
+  });
+};
+
+const openPaidModal = (payroll) => {
+  payrollToPay.value = payroll;
+  showPaidModal.value = true;
+};
+
+const confirmPaid = () => {
+  if (!payrollToPay.value) return;
+  isPaying.value = true;
+  router.post(route('admin.payroll.paid', payrollToPay.value.id), {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      showPaidModal.value = false;
+      payrollToPay.value = null;
+    },
+    onFinish: () => {
+      isPaying.value = false;
+    },
+  });
 };
 
 const viewPayslip = (payroll) => {
@@ -96,7 +120,7 @@ const formatMonthName = (monthStr) => {
 
             <button
               type="button"
-              @click="generatePayroll"
+              @click="openGenerateModal"
               :disabled="isGenerating"
               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs shadow-blue-600/20 transition active:scale-95 disabled:opacity-50 cursor-pointer"
             >
@@ -254,7 +278,7 @@ const formatMonthName = (monthStr) => {
                     <button
                       v-if="p.status === 'draft'"
                       type="button"
-                      @click="markAsPaid(p)"
+                      @click="openPaidModal(p)"
                       class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-xs cursor-pointer"
                       title="Tandai Sudah Dibayarkan"
                     >
@@ -390,5 +414,31 @@ const formatMonthName = (monthStr) => {
         </div>
       </div>
     </div>
+
+    <!-- Generate Payroll Confirmation Modal -->
+    <ConfirmModal 
+      :show="showGenerateModal"
+      title="Hitung Payroll Otomatis?"
+      :message="`Hitung kalkulasi payroll otomatis untuk semua pegawai aktif periode ${selectedMonth}? Data draft yang belum dibayar akan diperbarui berdasarkan rekaman presensi terkini.`"
+      confirm-text="Ya, Hitung Payroll"
+      cancel-text="Batal"
+      type="info"
+      :loading="isGenerating"
+      @close="showGenerateModal = false"
+      @confirm="confirmGenerate"
+    />
+
+    <!-- Mark as Paid Confirmation Modal -->
+    <ConfirmModal 
+      :show="showPaidModal"
+      title="Konfirmasi Pembayaran Gaji"
+      :message="payrollToPay ? `Tandai pembayaran gaji ${payrollToPay.employee?.user?.name} periode ${payrollToPay.month} sebesar ${formatRupiah(payrollToPay.net_salary)} sebagai LUNAS? Notifikasi akan otomatis dikirimkan ke pegawai.` : ''"
+      confirm-text="Ya, Tandai Lunas"
+      cancel-text="Batal"
+      type="success"
+      :loading="isPaying"
+      @close="showPaidModal = false"
+      @confirm="confirmPaid"
+    />
   </AdminLayout>
 </template>

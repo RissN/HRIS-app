@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { usePage, Link } from '@inertiajs/vue3';
 import Sidebar from '@/Components/Sidebar.vue';
 import LogoutModal from '@/Components/LogoutModal.vue';
@@ -12,6 +12,24 @@ const pendingCounts = computed(() => page.props.pendingCounts || { leaveRequests
 
 const mobileMenuOpen = ref(false);
 const showLogoutModal = ref(false);
+
+const showFlashSuccess = ref(false);
+const showFlashError = ref(false);
+let flashTimer = null;
+
+const dismissFlash = () => {
+  showFlashSuccess.value = false;
+  showFlashError.value = false;
+};
+
+watch(flash, (newFlash) => {
+  if (flashTimer) clearTimeout(flashTimer);
+  showFlashSuccess.value = !!newFlash.success;
+  showFlashError.value = !!newFlash.error;
+  if (newFlash.success || newFlash.error) {
+    flashTimer = setTimeout(dismissFlash, 5000);
+  }
+}, { immediate: true });
 </script>
 
 <template>
@@ -208,24 +226,43 @@ const showLogoutModal = ref(false);
         </div>
       </div>
 
-      <!-- Flash Notifications -->
-      <div v-if="flash.success || flash.error" class="w-full px-4 sm:px-6 lg:px-8 pt-4">
-        <div 
-          v-if="flash.success" 
-          class="flex items-center gap-3 p-3.5 text-sm rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 shadow-xs"
-        >
-          <i class="bi bi-check-circle-fill text-emerald-600 text-base shrink-0"></i>
-          <span class="flex-1 font-medium">{{ flash.success }}</span>
-        </div>
+      <!-- Flash Notifications with Auto-dismiss & Close button -->
+      <transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="transform -translate-y-2 opacity-0"
+        enter-to-class="transform translate-y-0 opacity-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="transform translate-y-0 opacity-100"
+        leave-to-class="transform -translate-y-2 opacity-0"
+      >
+        <div v-if="showFlashSuccess || showFlashError" class="w-full px-4 sm:px-6 lg:px-8 pt-4">
+          <div 
+            v-if="showFlashSuccess && flash.success" 
+            class="flex items-center justify-between gap-3 p-3.5 text-sm rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 shadow-xs"
+          >
+            <div class="flex items-center gap-3">
+              <i class="bi bi-check-circle-fill text-emerald-600 text-base shrink-0"></i>
+              <span class="font-medium">{{ flash.success }}</span>
+            </div>
+            <button @click="showFlashSuccess = false" class="text-emerald-500 hover:text-emerald-700 p-1 rounded-lg hover:bg-emerald-100/50 transition-colors cursor-pointer" title="Tutup">
+              <i class="bi bi-x-lg text-xs"></i>
+            </button>
+          </div>
 
-        <div 
-          v-if="flash.error" 
-          class="flex items-center gap-3 p-3.5 text-sm rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-800 shadow-xs"
-        >
-          <i class="bi bi-exclamation-triangle-fill text-rose-600 text-base shrink-0"></i>
-          <span class="flex-1 font-medium">{{ flash.error }}</span>
+          <div 
+            v-if="showFlashError && flash.error" 
+            class="flex items-center justify-between gap-3 p-3.5 text-sm rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-800 shadow-xs"
+          >
+            <div class="flex items-center gap-3">
+              <i class="bi bi-exclamation-triangle-fill text-rose-600 text-base shrink-0"></i>
+              <span class="font-medium">{{ flash.error }}</span>
+            </div>
+            <button @click="showFlashError = false" class="text-rose-500 hover:text-rose-700 p-1 rounded-lg hover:bg-rose-100/50 transition-colors cursor-pointer" title="Tutup">
+              <i class="bi bi-x-lg text-xs"></i>
+            </button>
+          </div>
         </div>
-      </div>
+      </transition>
 
       <!-- Main Slot -->
       <main class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-6">

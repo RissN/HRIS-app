@@ -19,15 +19,26 @@ const applyFilter = () => {
   }, { preserveState: true });
 };
 
-const toggleForm = useForm({});
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
-const toggleStatus = (emp) => {
-  const action = emp.is_active ? 'menonaktifkan' : 'mengaktifkan';
-  if (confirm(`Apakah Anda yakin ingin ${action} akun ${emp.name}?`)) {
-    toggleForm.post(route('admin.employees.toggle-status', emp.id), {
-      preserveScroll: true,
-    });
-  }
+const toggleForm = useForm({});
+const showToggleModal = ref(false);
+const employeeToToggle = ref(null);
+
+const openToggle = (emp) => {
+  employeeToToggle.value = emp;
+  showToggleModal.value = true;
+};
+
+const confirmToggle = () => {
+  if (!employeeToToggle.value) return;
+  toggleForm.post(route('admin.employees.toggle-status', employeeToToggle.value.id), {
+    preserveScroll: true,
+    onSuccess: () => {
+      showToggleModal.value = false;
+      employeeToToggle.value = null;
+    },
+  });
 };
 </script>
 
@@ -136,6 +147,10 @@ const toggleStatus = (emp) => {
                   <span class="text-slate-400 block">Bergabung:</span>
                   <span class="font-semibold text-slate-700">{{ emp.joined_date || '-' }}</span>
                 </div>
+                <div>
+                  <span class="text-slate-400 block">Hak Cuti:</span>
+                  <span class="font-semibold text-slate-700 font-mono">{{ emp.annual_leave_quota }} Hari/Thn</span>
+                </div>
               </div>
 
               <div class="flex justify-end gap-2 pt-2.5 border-t border-slate-200/60">
@@ -149,7 +164,7 @@ const toggleStatus = (emp) => {
                   type="button" 
                   class="px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                   :class="emp.is_active ? 'bg-rose-50 text-rose-700 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
-                  @click="toggleStatus(emp)"
+                  @click="openToggle(emp)"
                 >
                   <i :class="emp.is_active ? 'bi bi-person-x' : 'bi bi-person-check'" class="mr-1"></i>
                   {{ emp.is_active ? 'Nonaktifkan' : 'Aktifkan' }}
@@ -168,6 +183,7 @@ const toggleStatus = (emp) => {
                   <th class="pb-3 px-2">Departemen</th>
                   <th class="pb-3 px-2">Shift Aktif</th>
                   <th class="pb-3 px-2">Bergabung</th>
+                  <th class="pb-3 px-2">Hak Cuti</th>
                   <th class="pb-3 px-2">Status</th>
                   <th class="pb-3 px-2 text-right">Aksi</th>
                 </tr>
@@ -195,6 +211,7 @@ const toggleStatus = (emp) => {
                     </span>
                   </td>
                   <td class="py-3 px-2 text-slate-500">{{ emp.joined_date || '-' }}</td>
+                  <td class="py-3 px-2 font-mono font-semibold text-slate-700">{{ emp.annual_leave_quota }} Hari</td>
                   <td class="py-3 px-2">
                     <span 
                       class="px-2.5 py-0.5 text-xs font-semibold rounded-full border"
@@ -216,7 +233,7 @@ const toggleStatus = (emp) => {
                         type="button" 
                         class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                         :class="emp.is_active ? 'bg-rose-50 text-rose-700 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
-                        @click="toggleStatus(emp)"
+                        @click="openToggle(emp)"
                       >
                         <i :class="emp.is_active ? 'bi bi-person-x' : 'bi bi-person-check'"></i>
                         <span>{{ emp.is_active ? 'Nonaktifkan' : 'Aktifkan' }}</span>
@@ -233,5 +250,18 @@ const toggleStatus = (emp) => {
         </div>
       </div>
     </div>
+
+    <!-- Toggle Status Confirmation Modal -->
+    <ConfirmModal 
+      :show="showToggleModal"
+      :title="employeeToToggle?.is_active ? 'Nonaktifkan Akun Pegawai?' : 'Aktifkan Akun Pegawai?'"
+      :message="employeeToToggle ? (employeeToToggle.is_active ? `Apakah Anda yakin ingin menonaktifkan akun '${employeeToToggle.name}'? Pegawai tidak akan dapat masuk ke aplikasi hingga diaktifkan kembali.` : `Aktifkan kembali akses akun '${employeeToToggle.name}'? Pegawai akan dapat login dan melakukan presensi seperti biasa.`) : ''"
+      :confirm-text="employeeToToggle?.is_active ? 'Ya, Nonaktifkan' : 'Ya, Aktifkan'"
+      cancel-text="Batal"
+      :type="employeeToToggle?.is_active ? 'danger' : 'success'"
+      :loading="toggleForm.processing"
+      @close="showToggleModal = false"
+      @confirm="confirmToggle"
+    />
   </AdminLayout>
 </template>

@@ -16,6 +16,7 @@ const form = useForm({
   department: props.employee.department,
   bank_name: props.employee.bank_name || '',
   account_number: props.employee.account_number || '',
+  annual_leave_quota: props.employee.annual_leave_quota ?? 12,
   joined_date: props.employee.joined_date,
   schedule_id: props.employee.schedule_id || (props.schedules?.[0]?.id || ''),
   is_active: props.employee.is_active,
@@ -54,6 +55,10 @@ const submit = () => {
   }
   if (!form.joined_date) {
     form.setError('joined_date', 'Tanggal bergabung wajib diisi');
+    hasError = true;
+  }
+  if (form.annual_leave_quota === '' || form.annual_leave_quota === null || form.annual_leave_quota < 0 || form.annual_leave_quota > 365) {
+    form.setError('annual_leave_quota', 'Hak kuota cuti tahunan minimal 0 dan maksimal 365 hari');
     hasError = true;
   }
 
@@ -251,6 +256,29 @@ const submit = () => {
                   <i class="bi bi-exclamation-circle-fill text-xs shrink-0"></i>
                   <span>{{ form.errors.joined_date }}</span>
                 </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Hak Cuti Tahunan (Hari/Tahun) *</label>
+                <div class="relative">
+                  <input 
+                    v-model="form.annual_leave_quota" 
+                    @input="form.clearErrors('annual_leave_quota')"
+                    type="number" 
+                    min="0"
+                    max="365"
+                    :class="form.errors.annual_leave_quota 
+                      ? 'border-rose-400 bg-rose-50/20 text-rose-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20' 
+                      : 'border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20'"
+                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border outline-none transition-all font-mono" 
+                  />
+                  <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-semibold">Hari</span>
+                </div>
+                <div v-if="form.errors.annual_leave_quota" class="flex items-center gap-1.5 text-rose-600 text-xs mt-1.5 font-medium animate-in fade-in slide-in-from-top-1">
+                  <i class="bi bi-exclamation-circle-fill text-xs shrink-0"></i>
+                  <span>{{ form.errors.annual_leave_quota }}</span>
+                </div>
+                <span class="text-[11px] text-slate-400 block mt-1">Kuota cuti per tahun untuk pegawai bersangkutan</span>
               </div>
             </div>
           </div>

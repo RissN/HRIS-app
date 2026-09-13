@@ -186,7 +186,7 @@ const fillDemo = (role) => {
       </div>
 
       <div class="text-center mt-4 text-xs text-slate-400">
-        &copy; {{ new Date().getFullYear() }} Absensi Pro. Dilindungi hak cipta.
+        &copy; {{ new Date().getFullYear() }} HRIS &mdash; Human Resource Information System
       </div>
     </div>
   </div>

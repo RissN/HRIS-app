@@ -47,30 +47,30 @@ Route::get('/dashboard', function () {
 // ==========================================
 // EMPLOYEE ROUTES (Role: Pegawai)
 // ==========================================
-Route::middleware(['auth'])->prefix('employee')->name('employee.')->group(function () {
+Route::middleware(['auth', 'role:pegawai'])->prefix('employee')->name('employee.')->group(function () {
     // Attendance
     Route::get('/attendance', [EmployeeAttendanceController::class, 'index'])->name('attendance');
-    Route::post('/attendance/check-in', [EmployeeAttendanceController::class, 'checkIn'])->name('attendance.check-in');
-    Route::post('/attendance/check-out', [EmployeeAttendanceController::class, 'checkOut'])->name('attendance.check-out');
+    Route::post('/attendance/check-in', [EmployeeAttendanceController::class, 'checkIn'])->middleware('throttle:10,1')->name('attendance.check-in');
+    Route::post('/attendance/check-out', [EmployeeAttendanceController::class, 'checkOut'])->middleware('throttle:10,1')->name('attendance.check-out');
     Route::get('/history', [EmployeeAttendanceController::class, 'history'])->name('history');
 
     // Leave Requests
     Route::get('/leave-requests', [EmployeeLeaveRequestController::class, 'index'])->name('leave-requests.index');
     Route::get('/leave-requests/create', [EmployeeLeaveRequestController::class, 'create'])->name('leave-requests.create');
-    Route::post('/leave-requests', [EmployeeLeaveRequestController::class, 'store'])->name('leave-requests.store');
-    Route::delete('/leave-requests/{leaveRequest}', [EmployeeLeaveRequestController::class, 'cancel'])->name('leave-requests.cancel');
+    Route::post('/leave-requests', [EmployeeLeaveRequestController::class, 'store'])->middleware('throttle:10,1')->name('leave-requests.store');
+    Route::delete('/leave-requests/{leaveRequest}', [EmployeeLeaveRequestController::class, 'cancel'])->middleware('throttle:10,1')->name('leave-requests.cancel');
 
     // Complaints
     Route::get('/complaints', [EmployeeComplaintController::class, 'index'])->name('complaints.index');
     Route::get('/complaints/create', [EmployeeComplaintController::class, 'create'])->name('complaints.create');
-    Route::post('/complaints', [EmployeeComplaintController::class, 'store'])->name('complaints.store');
+    Route::post('/complaints', [EmployeeComplaintController::class, 'store'])->middleware('throttle:10,1')->name('complaints.store');
 
     // Profile
     Route::get('/profile', [EmployeeProfileController::class, 'edit'])->name('profile');
-    Route::post('/profile/personal', [EmployeeProfileController::class, 'updatePersonal'])->name('profile.personal');
-    Route::post('/profile/bank', [EmployeeProfileController::class, 'updateBank'])->name('profile.bank');
-    Route::post('/profile/password', [EmployeeProfileController::class, 'updatePassword'])->name('profile.password');
-    Route::post('/profile/avatar', [EmployeeProfileController::class, 'updateAvatar'])->name('profile.avatar');
+    Route::post('/profile/personal', [EmployeeProfileController::class, 'updatePersonal'])->middleware('throttle:10,1')->name('profile.personal');
+    Route::post('/profile/bank', [EmployeeProfileController::class, 'updateBank'])->middleware('throttle:10,1')->name('profile.bank');
+    Route::post('/profile/password', [EmployeeProfileController::class, 'updatePassword'])->middleware('throttle:10,1')->name('profile.password');
+    Route::post('/profile/avatar', [EmployeeProfileController::class, 'updateAvatar'])->middleware('throttle:10,1')->name('profile.avatar');
 
     // Payroll / Slip Gaji Pegawai
     Route::get('/payroll', [EmployeePayrollController::class, 'index'])->name('payroll.index');

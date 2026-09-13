@@ -53,12 +53,30 @@ const toggleStatus = (announcement) => {
   });
 };
 
-const deleteAnnouncement = (announcement) => {
-  if (confirm(`Apakah Anda yakin ingin menghapus pengumuman "${announcement.title}"?`)) {
-    router.delete(route('admin.announcements.destroy', announcement.id), {
-      preserveScroll: true,
-    });
-  }
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+
+const showDeleteModal = ref(false);
+const announcementToDelete = ref(null);
+const isDeleting = ref(false);
+
+const openDelete = (announcement) => {
+  announcementToDelete.value = announcement;
+  showDeleteModal.value = true;
+};
+
+const confirmDelete = () => {
+  if (!announcementToDelete.value) return;
+  isDeleting.value = true;
+  router.delete(route('admin.announcements.destroy', announcementToDelete.value.id), {
+    preserveScroll: true,
+    onSuccess: () => {
+      showDeleteModal.value = false;
+      announcementToDelete.value = null;
+    },
+    onFinish: () => {
+      isDeleting.value = false;
+    },
+  });
 };
 
 const getTypeConfig = (type) => {
@@ -169,8 +187,8 @@ const formatDate = (dateStr) => {
 
             <button
               type="button"
-              @click="deleteAnnouncement(ann)"
-              class="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1.5 rounded-lg transition"
+              @click="openDelete(ann)"
+              class="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1.5 rounded-lg transition cursor-pointer"
               title="Hapus Pengumuman"
             >
               <i class="bi bi-trash"></i>
@@ -271,5 +289,18 @@ const formatDate = (dateStr) => {
         </form>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <ConfirmModal 
+      :show="showDeleteModal"
+      title="Hapus Pengumuman?"
+      :message="announcementToDelete ? `Apakah Anda yakin ingin menghapus pengumuman '${announcementToDelete.title}'? Pengumuman tidak lagi akan tampil di beranda pegawai.` : ''"
+      confirm-text="Ya, Hapus Pengumuman"
+      cancel-text="Batal"
+      type="danger"
+      :loading="isDeleting"
+      @close="showDeleteModal = false"
+      @confirm="confirmDelete"
+    />
   </AdminLayout>
 </template>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
@@ -28,8 +28,13 @@ const applyFilter = () => {
 // Modal states
 const selectedLeave = ref(null);
 const showLeaveModal = ref(false);
-const selectedComplaint = ref(null);
+const selectedComplaintId = ref(null);
 const showComplaintModal = ref(false);
+
+const selectedComplaint = computed(() => {
+  if (!selectedComplaintId.value) return null;
+  return props.pendingComplaints?.find(c => c.id === selectedComplaintId.value) || null;
+});
 
 const openLeaveDetail = (item) => {
   selectedLeave.value = item;
@@ -37,7 +42,7 @@ const openLeaveDetail = (item) => {
 };
 
 const openComplaintDetail = (item) => {
-  selectedComplaint.value = item;
+  selectedComplaintId.value = item.id;
   showComplaintModal.value = true;
 };
 

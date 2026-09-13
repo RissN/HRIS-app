@@ -36,6 +36,8 @@ const userLng = ref(null);
 const distanceToOffice = ref(null);
 const geoLoading = ref(true);
 const geoError = ref(null);
+const cameraError = ref(null);
+const checkInError = ref(null);
 
 function getDistanceMeters(lat1, lng1, lat2, lng2) {
   const R = 6371000;
@@ -71,11 +73,11 @@ const getLocation = () => {
       geoLoading.value = false;
     },
     (err) => {
-      console.warn('Geolocation fallback:', err);
-      geoError.value = 'Izin lokasi tidak aktif atau diblokir. Menggunakan koordinat kantor untuk demo.';
-      userLat.value = office.value.latitude;
-      userLng.value = office.value.longitude;
-      distanceToOffice.value = 0;
+      console.warn('Geolocation error:', err);
+      geoError.value = 'Izin lokasi GPS tidak aktif atau diblokir. Aktifkan GPS untuk check-in status Hadir.';
+      userLat.value = null;
+      userLng.value = null;
+      distanceToOffice.value = null;
       geoLoading.value = false;
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -99,7 +101,7 @@ const openCamera = async () => {
       videoRef.value.srcObject = mediaStream;
     }
   } catch (err) {
-    alert('Tidak dapat mengakses kamera: ' + err.message);
+    cameraError.value = 'Tidak dapat mengakses kamera: ' + err.message;
     isCameraOpen.value = false;
   }
 };
@@ -138,6 +140,8 @@ const checkOutForm = useForm({
   note: '',
 });
 
+const hasGpsLocation = computed(() => userLat.value !== null && userLng.value !== null);
+
 const isWithinRadius = computed(() => {
   if (distanceToOffice.value === null) return false;
   return distanceToOffice.value <= office.value.radius;
@@ -156,8 +160,15 @@ const isDoneToday = computed(() => {
 });
 
 const submitCheckIn = () => {
+  checkInError.value = null;
+
+  if (checkInForm.status === 'present' && !hasGpsLocation.value) {
+    checkInError.value = 'Lokasi GPS tidak tersedia. Aktifkan GPS untuk check-in status Hadir.';
+    return;
+  }
+
   if (checkInForm.status === 'present' && !isWithinRadius.value) {
-    alert(`Lokasi Anda (${distanceToOffice.value}m) berada di luar batas radius maksimal ${office.value.radius}m dari kantor.`);
+    checkInError.value = `Lokasi Anda (${distanceToOffice.value}m) berada di luar batas radius maksimal ${office.value.radius}m dari kantor.`;
     return;
   }
 
@@ -306,6 +317,26 @@ const formatDate = (dateStr) => {
         <div v-if="geoLoading" class="py-3 text-center text-xs text-slate-400 flex items-center justify-center gap-2 bg-slate-50 rounded-2xl">
           <span class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
           <span>Mendeteksi koordinat GPS perangkat Anda...</span>
+        </div>
+        <div 
+          v-else-if="geoError" 
+          class="p-4 rounded-2xl border transition-all bg-amber-50/60 border-amber-200/80"
+        >
+          <div class="flex items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill text-amber-600 text-base shrink-0"></i>
+            <div>
+              <div class="text-xs font-bold text-amber-800">GPS Tidak Tersedia</div>
+              <div class="text-[11px] text-amber-700 mt-0.5">{{ geoError }}</div>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-xl transition-colors cursor-pointer"
+            @click="getLocation"
+          >
+            <i class="bi bi-arrow-clockwise text-xs"></i>
+            <span>Coba Lagi</span>
+          </button>
         </div>
         <div 
           v-else 
@@ -484,18 +515,40 @@ const formatDate = (dateStr) => {
             </div>
           </div>
 
+          <!-- Camera Error -->
+          <div v-if="cameraError" class="flex items-center gap-2 p-3 text-xs rounded-xl bg-rose-50 border border-rose-200/80 text-rose-800">
+            <i class="bi bi-exclamation-triangle-fill text-rose-600 shrink-0"></i>
+            <span class="flex-1 font-medium">{{ cameraError }}</span>
+            <button type="button" class="text-rose-600 hover:text-rose-800 cursor-pointer" @click="cameraError = null">
+              <i class="bi bi-x-lg text-xs"></i>
+            </button>
+          </div>
+
+          <!-- Check-in Error -->
+          <div v-if="checkInError" class="flex items-center gap-2 p-3 text-xs rounded-xl bg-rose-50 border border-rose-200/80 text-rose-800">
+            <i class="bi bi-exclamation-triangle-fill text-rose-600 shrink-0"></i>
+            <span class="flex-1 font-medium">{{ checkInError }}</span>
+            <button type="button" class="text-rose-600 hover:text-rose-800 cursor-pointer" @click="checkInError = null">
+              <i class="bi bi-x-lg text-xs"></i>
+            </button>
+          </div>
+
           <!-- Big Touch-Friendly Button -->
           <button 
             type="submit" 
             class="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            :disabled="checkInForm.processing || (checkInForm.status === 'present' && !isWithinRadius)"
+            :disabled="checkInForm.processing || (checkInForm.status === 'present' && (!hasGpsLocation || !isWithinRadius))"
           >
             <span v-if="checkInForm.processing" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
             <i v-else class="bi bi-box-arrow-in-right text-lg"></i>
             <span>Check-in Sekarang</span>
           </button>
 
-          <div v-if="checkInForm.status === 'present' && !isWithinRadius" class="text-rose-600 text-center text-xs font-medium flex items-center justify-center gap-1">
+          <div v-if="checkInForm.status === 'present' && !hasGpsLocation" class="text-amber-600 text-center text-xs font-medium flex items-center justify-center gap-1">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>Aktifkan lokasi GPS untuk check-in sebagai Hadir.</span>
+          </div>
+          <div v-else-if="checkInForm.status === 'present' && !isWithinRadius" class="text-rose-600 text-center text-xs font-medium flex items-center justify-center gap-1">
             <i class="bi bi-exclamation-triangle-fill"></i>
             <span>Anda harus berada dalam radius kantor untuk status Hadir.</span>
           </div>

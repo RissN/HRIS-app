@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import StatusBadge from './StatusBadge.vue';
 
@@ -18,6 +18,11 @@ const emit = defineEmits(['close']);
 
 const activeTab = ref('resolve'); // 'resolve', 'reject', 'review'
 const correctAttendance = ref(false);
+const isReviewing = ref(false);
+
+const isFinalized = computed(() => {
+  return props.complaint && (props.complaint.status === 'resolved' || props.complaint.status === 'rejected');
+});
 
 const resolveForm = useForm({
   admin_note: '',
@@ -42,17 +47,32 @@ watch(() => props.complaint, (val) => {
     } else {
       correctAttendance.value = false;
     }
-    activeTab.value = val.status === 'pending' ? 'review' : 'resolve';
+    if (val.status === 'pending') {
+      activeTab.value = 'review';
+    } else {
+      activeTab.value = 'resolve';
+    }
   }
-});
+}, { immediate: true });
 
 const setInReview = () => {
-  if (!props.complaint) return;
+  if (!props.complaint || props.complaint.status !== 'pending' || isReviewing.value) return;
+  isReviewing.value = true;
   const form = useForm({ status: 'in_review' });
   form.post(route('admin.complaints.status', props.complaint.id), {
     preserveScroll: true,
     onSuccess: () => {
+      isReviewing.value = false;
+      if (props.complaint) {
+        props.complaint.status = 'in_review';
+      }
       activeTab.value = 'resolve';
+    },
+    onError: () => {
+      isReviewing.value = false;
+    },
+    onFinish: () => {
+      isReviewing.value = false;
     },
   });
 };
@@ -214,8 +234,74 @@ const formatDateTime = (dtStr) => {
             </div>
           </div>
 
-          <!-- Right Column: Admin Actions & Attendance Correction (6 cols) -->
-          <div class="lg:col-span-6 flex flex-col space-y-4">
+          <!-- Right Column: Finalized Summary (When complaint is resolved or rejected) -->
+          <div v-if="isFinalized" class="lg:col-span-6 flex flex-col space-y-4">
+            <div 
+              class="p-5 rounded-3xl border flex-1 flex flex-col justify-between"
+              :class="complaint.status === 'resolved' ? 'bg-emerald-50/50 border-emerald-200' : 'bg-rose-50/50 border-rose-200'"
+            >
+              <div class="space-y-4">
+                <div class="flex items-center gap-2.5">
+                  <div 
+                    class="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shadow-xs"
+                    :class="complaint.status === 'resolved' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'"
+                  >
+                    <i :class="complaint.status === 'resolved' ? 'bi bi-check2-circle' : 'bi bi-x-circle'"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-bold text-slate-900 leading-tight">
+                      {{ complaint.status === 'resolved' ? 'Komplain Selesai Ditindaklanjuti' : 'Komplain Ditolak' }}
+                    </h4>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                      Status komplain ini telah final dan tidak dapat diubah kembali.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="p-4 bg-white rounded-2xl border border-slate-100 shadow-xs space-y-3">
+                  <div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                      Catatan Penanganan Admin
+                    </span>
+                    <p class="text-xs text-slate-800 leading-relaxed whitespace-pre-wrap font-medium">
+                      {{ complaint.admin_note || '-' }}
+                    </p>
+                  </div>
+
+                  <div v-if="complaint.resolved_at" class="pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1.5">
+                    <i class="bi bi-clock-history text-slate-400"></i>
+                    <span>Diproses pada {{ formatDateTime(complaint.resolved_at) }}</span>
+                    <span v-if="complaint.resolver">&bull; oleh {{ complaint.resolver.name }}</span>
+                  </div>
+                </div>
+
+                <!-- Corrected Attendance info if available -->
+                <div v-if="complaint.attendance" class="p-3.5 bg-white rounded-2xl border border-slate-100 shadow-xs space-y-2">
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Data Presensi Terkait
+                  </span>
+                  <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="p-2 bg-slate-50 rounded-xl">
+                      <span class="text-[10px] text-slate-400 block">Jam Masuk</span>
+                      <span class="font-bold text-slate-800">{{ complaint.attendance.check_in_at ? formatDateTime(complaint.attendance.check_in_at) : '-' }}</span>
+                    </div>
+                    <div class="p-2 bg-slate-50 rounded-xl">
+                      <span class="text-[10px] text-slate-400 block">Status Presensi</span>
+                      <StatusBadge :status="complaint.attendance.status" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 p-3 bg-slate-100/80 rounded-2xl text-center text-xs text-slate-500 font-medium">
+                <i class="bi bi-lock-fill mr-1 text-slate-400"></i>
+                Komplain telah selesai diproses &ndash; Aksi terkunci
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Admin Actions & Attendance Correction (When complaint is pending or in_review) -->
+          <div v-else class="lg:col-span-6 flex flex-col space-y-4">
             <!-- Action Form Header & Tab Switcher -->
             <div class="p-1 bg-slate-100 rounded-2xl flex text-xs font-semibold">
               <button 
@@ -404,13 +490,23 @@ const formatDateTime = (dtStr) => {
               </div>
 
               <button 
+                v-if="complaint.status === 'pending'"
                 type="button" 
-                class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2 mt-3"
+                class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2 mt-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="isReviewing"
                 @click="setInReview"
               >
-                <i class="bi bi-eye"></i>
-                <span>Tandai Sedang Ditinjau</span>
+                <span v-if="isReviewing" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                <i v-else class="bi bi-eye"></i>
+                <span>{{ isReviewing ? 'Memproses...' : 'Tandai Sedang Ditinjau' }}</span>
               </button>
+              <div 
+                v-else
+                class="w-full py-2.5 px-4 rounded-xl bg-slate-100 text-slate-500 text-xs font-semibold text-center flex items-center justify-center gap-2 mt-3 border border-slate-200"
+              >
+                <i class="bi bi-check2-circle text-blue-600 text-sm"></i>
+                <span>Komplain ini sudah berstatus Sedang Ditinjau</span>
+              </div>
             </div>
           </div>
         </div>

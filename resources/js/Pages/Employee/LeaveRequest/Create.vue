@@ -1,7 +1,11 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import EmployeeLayout from '@/Layouts/EmployeeLayout.vue';
+
+const props = defineProps({
+  leaveBalance: Object,
+});
 
 const form = useForm({
   type: 'annual_leave',
@@ -12,6 +16,11 @@ const form = useForm({
 });
 
 const calculatedDays = ref(0);
+
+const isExceedingQuota = computed(() => {
+  if (form.type !== 'annual_leave' || !props.leaveBalance) return false;
+  return calculatedDays.value > (props.leaveBalance.available ?? 0);
+});
 
 const calculateWorkingDays = (startStr, endStr) => {
   if (!startStr || !endStr) return 0;
@@ -62,6 +71,10 @@ const submit = () => {
     form.setError('reason', 'Alasan pengajuan wajib diisi secara rinci.');
     hasError = true;
   }
+  if (isExceedingQuota.value) {
+    form.setError('type', `Sisa kuota cuti tahunan Anda tidak mencukupi (${props.leaveBalance?.available ?? 0} hari tersisa). Pengajuan membutuhkan ${calculatedDays.value} hari kerja.`);
+    hasError = true;
+  }
 
   if (hasError) {
     return;
@@ -95,6 +108,42 @@ const submit = () => {
             <i class="bi bi-arrow-left"></i>
             <span>Kembali</span>
           </Link>
+        </div>
+
+        <!-- Leave Balance Status Card -->
+        <div v-if="leaveBalance" class="mb-5 p-4 rounded-2xl border transition-all" :class="form.type === 'annual_leave' ? 'bg-blue-50/40 border-blue-200' : 'bg-slate-50 border-slate-200/70'">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full" :class="leaveBalance.available > 0 ? 'bg-emerald-500 ring-4 ring-emerald-100' : 'bg-rose-500 ring-4 ring-rose-100'"></span>
+              <span class="text-xs font-bold text-slate-800">Saldo Cuti Tahunan (Tahun {{ leaveBalance.year }})</span>
+            </div>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-full" :class="leaveBalance.available > 0 ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800'">
+              {{ leaveBalance.available }} Hari Tersedia
+            </span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center text-xs">
+            <div class="p-2.5 bg-white rounded-xl border border-slate-100 shadow-2xs">
+              <div class="text-[10px] text-slate-400 font-semibold uppercase">Hak Kuota</div>
+              <div class="text-sm font-bold text-slate-800 font-mono mt-0.5">{{ leaveBalance.quota }} Hari</div>
+            </div>
+            <div class="p-2.5 bg-white rounded-xl border border-slate-100 shadow-2xs">
+              <div class="text-[10px] text-slate-400 font-semibold uppercase">Terpakai</div>
+              <div class="text-sm font-bold text-amber-600 font-mono mt-0.5">{{ leaveBalance.used }} Hari</div>
+            </div>
+            <div class="p-2.5 bg-white rounded-xl border border-slate-100 shadow-2xs">
+              <div class="text-[10px] text-slate-400 font-semibold uppercase">Menunggu Review</div>
+              <div class="text-sm font-bold text-purple-600 font-mono mt-0.5">{{ leaveBalance.pending }} Hari</div>
+            </div>
+          </div>
+
+          <!-- Alert if quota is exceeded -->
+          <div v-if="isExceedingQuota" class="mt-3 p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2.5 text-xs text-rose-700 font-medium">
+            <i class="bi bi-exclamation-triangle-fill text-rose-600 text-base shrink-0"></i>
+            <div>
+              <strong>Kuota Cuti Tidak Mencukupi!</strong> Pengajuan ini membutuhkan {{ calculatedDays }} hari kerja, sedangkan sisa kuota yang tersedia hanya {{ leaveBalance.available }} hari.
+            </div>
+          </div>
         </div>
 
         <form novalidate @submit.prevent="submit" class="space-y-4">
@@ -211,12 +260,14 @@ const submit = () => {
           <!-- Submit Button -->
           <button 
             type="submit" 
-            class="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer pt-1"
-            :disabled="form.processing"
+            class="w-full h-14 rounded-2xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer pt-1"
+            :class="isExceedingQuota ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-lg shadow-blue-600/25'"
+            :disabled="form.processing || isExceedingQuota"
           >
             <span v-if="form.processing" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            <span>Kirim Permohonan Cuti</span>
-            <i class="bi bi-send-fill text-sm"></i>
+            <span>{{ isExceedingQuota ? 'Sisa Kuota Cuti Tidak Cukup' : 'Kirim Permohonan Cuti' }}</span>
+            <i v-if="!isExceedingQuota" class="bi bi-send-fill text-sm"></i>
+            <i v-else class="bi bi-slash-circle text-sm"></i>
           </button>
         </form>
       </div>

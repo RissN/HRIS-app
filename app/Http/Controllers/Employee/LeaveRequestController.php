@@ -27,12 +27,20 @@ class LeaveRequestController extends Controller
 
         return Inertia::render('Employee/LeaveRequest/Index', [
             'leaveRequests' => $leaveRequests,
+            'leaveBalance' => $employee->getAnnualLeaveBalance(),
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('Employee/LeaveRequest/Create');
+        $employee = $request->user()->employee;
+        if (! $employee) {
+            abort(403, 'Profil pegawai tidak ditemukan.');
+        }
+
+        return Inertia::render('Employee/LeaveRequest/Create', [
+            'leaveBalance' => $employee->getAnnualLeaveBalance(),
+        ]);
     }
 
     public function store(Request $request)
@@ -53,6 +61,17 @@ class LeaveRequestController extends Controller
         $startDate = Carbon::parse($validated['start_date']);
         $endDate = Carbon::parse($validated['end_date']);
         $totalDays = AttendanceService::calculateWorkingDays($startDate, $endDate);
+
+        if ($validated['type'] === 'annual_leave') {
+            $year = $startDate->year;
+            $balance = $employee->getAnnualLeaveBalance($year);
+
+            if ($totalDays > $balance['available']) {
+                return back()->withErrors([
+                    'type' => "Sisa kuota cuti tahunan Anda tidak mencukupi ({$balance['available']} hari tersisa). Pengajuan membutuhkan {$totalDays} hari kerja.",
+                ])->withInput();
+            }
+        }
 
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {

@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { usePage, Link } from '@inertiajs/vue3';
 import Sidebar from '@/Components/Sidebar.vue';
 import BottomNav from '@/Components/BottomNav.vue';
@@ -8,6 +8,24 @@ import NotificationDropdown from '@/Components/NotificationDropdown.vue';
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const flash = computed(() => page.props.flash || {});
+
+const showFlashSuccess = ref(false);
+const showFlashError = ref(false);
+let flashTimer = null;
+
+const dismissFlash = () => {
+  showFlashSuccess.value = false;
+  showFlashError.value = false;
+};
+
+watch(flash, (newFlash) => {
+  if (flashTimer) clearTimeout(flashTimer);
+  showFlashSuccess.value = !!newFlash.success;
+  showFlashError.value = !!newFlash.error;
+  if (newFlash.success || newFlash.error) {
+    flashTimer = setTimeout(dismissFlash, 5000);
+  }
+}, { immediate: true });
 </script>
 
 <template>
@@ -61,23 +79,38 @@ const flash = computed(() => page.props.flash || {});
         </div>
       </header>
       <!-- Flash Notifications -->
-      <div v-if="flash.success || flash.error" class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4">
-        <div 
-          v-if="flash.success" 
-          class="flex items-center gap-3 p-3.5 text-sm rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 shadow-xs"
-        >
-          <i class="bi bi-check-circle-fill text-emerald-600 text-base shrink-0"></i>
-          <span class="flex-1 font-medium">{{ flash.success }}</span>
-        </div>
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0 -translate-y-2"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 -translate-y-2"
+      >
+        <div v-if="showFlashSuccess || showFlashError" class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4">
+          <div 
+            v-if="showFlashSuccess" 
+            class="flex items-center gap-3 p-3.5 text-sm rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 shadow-xs"
+          >
+            <i class="bi bi-check-circle-fill text-emerald-600 text-base shrink-0"></i>
+            <span class="flex-1 font-medium">{{ flash.success }}</span>
+            <button type="button" class="text-emerald-600 hover:text-emerald-800 cursor-pointer" @click="dismissFlash">
+              <i class="bi bi-x-lg text-xs"></i>
+            </button>
+          </div>
 
-        <div 
-          v-if="flash.error" 
-          class="flex items-center gap-3 p-3.5 text-sm rounded-xl bg-rose-50 border border-rose-200/80 text-rose-800 shadow-xs"
-        >
-          <i class="bi bi-exclamation-triangle-fill text-rose-600 text-base shrink-0"></i>
-          <span class="flex-1 font-medium">{{ flash.error }}</span>
+          <div 
+            v-if="showFlashError" 
+            class="flex items-center gap-3 p-3.5 text-sm rounded-xl bg-rose-50 border border-rose-200/80 text-rose-800 shadow-xs"
+          >
+            <i class="bi bi-exclamation-triangle-fill text-rose-600 text-base shrink-0"></i>
+            <span class="flex-1 font-medium">{{ flash.error }}</span>
+            <button type="button" class="text-rose-600 hover:text-rose-800 cursor-pointer" @click="dismissFlash">
+              <i class="bi bi-x-lg text-xs"></i>
+            </button>
+          </div>
         </div>
-      </div>
+      </Transition>
 
       <!-- Main Slot Content -->
       <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
@@ -86,7 +119,7 @@ const flash = computed(() => page.props.flash || {});
 
       <!-- Desktop Footer -->
       <footer class="hidden md:block text-center py-4 text-xs text-slate-400 border-t border-slate-200/60 mt-auto">
-        &copy; {{ new Date().getFullYear() }} Absensi Pro &mdash; Sistem Presensi Kerja Mobile-Friendly
+        &copy; {{ new Date().getFullYear() }} HRIS &mdash; Sistem Informasi Manajemen SDM
       </footer>
     </div>
 

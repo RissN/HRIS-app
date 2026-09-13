@@ -23,6 +23,8 @@ const applyFilter = () => {
   }, { preserveState: true });
 };
 
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+
 // Detail modal
 const selectedRequest = ref(null);
 const showDetailModal = ref(false);
@@ -34,12 +36,23 @@ const openDetail = (item) => {
 
 // Approve
 const approveForm = useForm({});
-const approveRequest = (item) => {
-  if (confirm(`Apakah Anda yakin ingin menyetujui pengajuan cuti dari ${item.employee?.user?.name}? Data absensi akan otomatis disinkronkan.`)) {
-    approveForm.post(route('admin.leave-requests.approve', item.id), {
-      preserveScroll: true,
-    });
-  }
+const showApproveModal = ref(false);
+const approvingItem = ref(null);
+
+const openApprove = (item) => {
+  approvingItem.value = item;
+  showApproveModal.value = true;
+};
+
+const confirmApprove = () => {
+  if (!approvingItem.value) return;
+  approveForm.post(route('admin.leave-requests.approve', approvingItem.value.id), {
+    preserveScroll: true,
+    onSuccess: () => {
+      showApproveModal.value = false;
+      approvingItem.value = null;
+    },
+  });
 };
 
 // Reject modal
@@ -168,8 +181,11 @@ const formatDate = (dateStr) => {
                 <td class="py-3 px-4 font-medium text-slate-700 whitespace-nowrap">
                   {{ formatDate(item.start_date) }} &ndash; {{ formatDate(item.end_date) }}
                 </td>
-                <td class="py-3 px-4 font-bold text-blue-600 whitespace-nowrap">
-                  {{ item.total_days }} Hari
+                <td class="py-3 px-4 whitespace-nowrap">
+                  <div class="font-bold text-blue-600">{{ item.total_days }} Hari</div>
+                  <div v-if="item.type === 'annual_leave' && item.employee_balance" class="text-[10px] text-slate-400 font-medium">
+                    Sisa: {{ item.employee_balance.remaining }} hari
+                  </div>
                 </td>
                 <td class="py-3 px-4 text-slate-600 max-w-xs truncate" :title="item.reason">
                   {{ item.reason }}
@@ -192,7 +208,7 @@ const formatDate = (dateStr) => {
                       <button 
                         type="button" 
                         class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer shadow-xs" 
-                        @click="approveRequest(item)"
+                        @click="openApprove(item)"
                       >
                         <i class="bi bi-check2"></i>
                         <span>Setujui</span>
@@ -305,6 +321,19 @@ const formatDate = (dateStr) => {
       :show="showDetailModal" 
       :request="selectedRequest" 
       @close="showDetailModal = false" 
+    />
+
+    <!-- Approve Confirmation Modal -->
+    <ConfirmModal 
+      :show="showApproveModal"
+      title="Setujui Pengajuan Cuti?"
+      :message="approvingItem ? (`Apakah Anda yakin ingin menyetujui pengajuan cuti dari ${approvingItem.employee?.user?.name} (${approvingItem.total_days} Hari Kerja)?` + (approvingItem.type === 'annual_leave' && approvingItem.employee_balance ? ` Sisa kuota cuti pegawai saat ini: ${approvingItem.employee_balance.remaining} hari.` : '') + ' Rekaman absensi pegawai akan otomatis disinkronkan.') : ''"
+      confirm-text="Ya, Setujui Cuti"
+      cancel-text="Batal"
+      type="success"
+      :loading="approveForm.processing"
+      @close="showApproveModal = false"
+      @confirm="confirmApprove"
     />
   </AdminLayout>
 </template>

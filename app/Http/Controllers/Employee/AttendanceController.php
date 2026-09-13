@@ -119,6 +119,13 @@ class AttendanceController extends Controller
             $imageParts = explode(';base64,', $imageData);
             $imageTypeAux = explode('image/', $imageParts[0]);
             $imageType = $imageTypeAux[1] ?? 'jpg';
+
+            // Whitelist allowed image types to prevent arbitrary file extension injection
+            $allowedTypes = ['jpg', 'jpeg', 'png', 'webp'];
+            if (! in_array($imageType, $allowedTypes)) {
+                $imageType = 'jpg';
+            }
+
             $imageBase64 = base64_decode($imageParts[1]);
 
             $fileName = 'selfies/'.$employee->id.'_'.time().'.'.$imageType;

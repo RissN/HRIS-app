@@ -89,6 +89,33 @@ const formatDateTime = (dtStr) => {
           </div>
         </div>
 
+        <!-- Leave Balance Info if Annual Leave & Balance available -->
+        <div v-if="request.employee_balance && request.type === 'annual_leave'" class="p-3.5 bg-blue-50/60 rounded-2xl border border-blue-100 flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm shadow-xs">
+              <i class="bi bi-calendar2-check"></i>
+            </span>
+            <div>
+              <div class="font-bold text-slate-900">Saldo Cuti Tahunan Pegawai</div>
+              <div class="text-[11px] text-slate-500">Tahun {{ request.employee_balance.year }}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 text-center">
+            <div>
+              <div class="text-[10px] text-slate-400 font-semibold uppercase">Hak Kuota</div>
+              <div class="font-bold text-slate-800 font-mono">{{ request.employee_balance.quota }}h</div>
+            </div>
+            <div>
+              <div class="text-[10px] text-slate-400 font-semibold uppercase">Terpakai</div>
+              <div class="font-bold text-amber-600 font-mono">{{ request.employee_balance.used }}h</div>
+            </div>
+            <div>
+              <div class="text-[10px] text-blue-600 font-semibold uppercase">Sisa Kuota</div>
+              <div class="font-bold text-blue-700 font-mono">{{ request.employee_balance.remaining }}h</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Dates & Duration Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">

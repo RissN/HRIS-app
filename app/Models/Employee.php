@@ -16,6 +16,7 @@ class Employee extends Model
         'phone',
         'position',
         'department',
+        'annual_leave_quota',
         'bank_name',
         'account_number',
         'joined_date',
@@ -25,8 +26,60 @@ class Employee extends Model
     protected function casts(): array
     {
         return [
+            'annual_leave_quota' => 'integer',
             'account_number' => 'encrypted',
             'joined_date' => 'date',
+        ];
+    }
+
+    public function getAnnualLeaveUsed(?int $year = null): int
+    {
+        $year = $year ?? (int) now()->year;
+
+        return (int) $this->leaveRequests()
+            ->where('type', 'annual_leave')
+            ->where('status', 'approved')
+            ->whereYear('start_date', $year)
+            ->sum('total_days');
+    }
+
+    public function getAnnualLeavePending(?int $year = null): int
+    {
+        $year = $year ?? (int) now()->year;
+
+        return (int) $this->leaveRequests()
+            ->where('type', 'annual_leave')
+            ->where('status', 'pending')
+            ->whereYear('start_date', $year)
+            ->sum('total_days');
+    }
+
+    public function getAnnualLeaveRemaining(?int $year = null): int
+    {
+        $year = $year ?? (int) now()->year;
+        $quota = (int) ($this->annual_leave_quota ?? 12);
+
+        return max(0, $quota - $this->getAnnualLeaveUsed($year));
+    }
+
+    /**
+     * @return array{year: int, quota: int, used: int, pending: int, remaining: int, available: int}
+     */
+    public function getAnnualLeaveBalance(?int $year = null): array
+    {
+        $year = $year ?? (int) now()->year;
+        $quota = (int) ($this->annual_leave_quota ?? 12);
+        $used = $this->getAnnualLeaveUsed($year);
+        $pending = $this->getAnnualLeavePending($year);
+        $remaining = max(0, $quota - $used);
+
+        return [
+            'year' => $year,
+            'quota' => $quota,
+            'used' => $used,
+            'pending' => $pending,
+            'remaining' => $remaining,
+            'available' => max(0, $remaining - $pending),
         ];
     }
 

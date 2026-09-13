@@ -42,6 +42,12 @@ class LeaveRequestController extends Controller
         }
 
         $leaveRequests = $query->orderBy('created_at', 'desc')->get();
+        $leaveRequests->each(function ($item) {
+            if ($item->employee) {
+                $item->employee_balance = $item->employee->getAnnualLeaveBalance(Carbon::parse($item->start_date)->year);
+            }
+        });
+
         $departments = Employee::select('department')->distinct()->pluck('department');
 
         return Inertia::render('Admin/LeaveRequests/Index', [
@@ -60,6 +66,14 @@ class LeaveRequestController extends Controller
     {
         if ($leaveRequest->status !== 'pending') {
             return back()->with('error', 'Pengajuan ini sudah pernah diproses.');
+        }
+
+        if ($leaveRequest->type === 'annual_leave' && $leaveRequest->employee) {
+            $year = Carbon::parse($leaveRequest->start_date)->year;
+            $remaining = $leaveRequest->employee->getAnnualLeaveRemaining($year);
+            if ($leaveRequest->total_days > $remaining) {
+                return back()->with('error', "Tidak dapat menyetujui: sisa kuota cuti tahunan pegawai hanya tersisa {$remaining} hari, sedangkan pengajuan ini membutuhkan {$leaveRequest->total_days} hari.");
+            }
         }
 
         $leaveRequest->update([

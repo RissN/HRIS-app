@@ -9,6 +9,7 @@ use App\Models\Notification;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -62,7 +63,10 @@ class ComplaintController extends Controller
         $validated = $request->validate([
             'date' => 'required|date',
             'type' => 'required|in:wrong_time,location_error,forgot_checkout,system_error,other',
-            'attendance_id' => 'nullable|exists:attendances,id',
+            'attendance_id' => [
+                'nullable',
+                Rule::exists('attendances', 'id')->where('employee_id', $employee->id),
+            ],
             'description' => 'required|string|min:10|max:2000',
             'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
