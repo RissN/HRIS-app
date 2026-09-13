@@ -1,185 +1,124 @@
-# HRIS — Human Resource Information System
+# HRIS - Human Resource Information System
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="220" alt="Laravel Logo" />
-</p>
-
-**HRIS (Human Resource Information System)** adalah platform manajemen sumber daya manusia dan presensi modern berbasis web dengan arsitektur SPA (*Single Page Application*) yang dibangun menggunakan **Laravel 13**, **Inertia.js (Vue 3)**, dan **Tailwind CSS**.
-
-Aplikasi dirancang dengan pendekatan *mobile-friendly* dan estetika minimalis modern (*clean white base*, *royal blue accent*, dan *slate typography*), memberikan kemudahan pencatatan kehadiran mandiri bagi pegawai serta kendali komprehensif bagi tim HRD dalam mengelola data pegawai, jadwal shift, geofencing kantor, rekapitulasi laporan, notifikasi, hingga kalkulasi payroll otomatis.
+Platform manajemen sumber daya manusia dan presensi berbasis web dengan arsitektur SPA (Single Page Application) yang dibangun menggunakan Laravel 11, Inertia.js (Vue 3), dan Tailwind CSS.
 
 ---
 
-## 🚀 Fitur Unggulan Sistem
+## Fitur Utama
 
-### 1. Portal Pegawai (Mobile & Desktop)
-- **Presensi GPS & Geofencing Real-time**:
-  - Jam digital presisi sinkron waktu server.
-  - Pengecekan jarak koordinat GPS instan dengan formula *Haversine* terhadap radius kantor resmi.
-  - Indikator status jarak visual ("Di Dalam Radius" vs "Di Luar Radius") sebelum check-in.
-  - Dukungan kamera selfie perangkat untuk verifikasi kehadiran fisik.
-  - Opsi status kehadiran: **Hadir**, **WFH (Work From Home)**, **Izin**, dan **Sakit**.
-- **Riwayat Presensi Interaktif**:
-  - Rekap bulanan, kartu KPI (*Total Hadir, Terlambat, Izin/Sakit, Alpa*), dan detail jam kerja.
-  - Akses pengajuan komplain langsung dari baris riwayat.
-- **Pengajuan Cuti / Izin / Sakit**:
-  - Formulir cuti dengan penghitungan otomatis hari kerja efektif (otomatis mengecualikan hari libur akhir pekan).
-  - Unggah berkas pendukung (surat dokter / formulir tugas) format PDF/JPG/PNG.
-  - Pelacakan status verifikasi HR (*Pending, Approved, Rejected*) dengan fitur pembatalan mandiri.
-- **Komplain Koreksi Presensi**:
-  - Laporkan kendala jam salah, gangguan sinyal GPS, lupa check-out pulang, atau kendala teknis.
-  - Unggah bukti tangkapan layar dan pantau respon perbaikan dari HR.
-- **Slip Gaji Pegawai (Payroll)**:
-  - Pratinjau take-home pay bulanan, tunjangan kehadiran, dan potongan presensi.
-  - Tombol cetak slip gaji pribadi siap cetak.
-- **Profil Mandiri & Notifikasi**:
-  - Pengelolaan data kontak, foto profil avatar, dan rekening bank.
-  - Lonceng notifikasi interaktif real-time dengan counter unread.
+### 1. Portal Pegawai
+- Presensi Geofencing GPS: Jam digital sinkron server, validasi koordinat GPS radius kantor dengan formula Haversine, kamera selfie kehadiran, dan opsi status (Hadir, WFH, Izin, Sakit).
+- Saldo & Kuota Cuti Tahunan: Kuota standar 12 hari kerja per tahun, kartu saldo cuti (Hak Kuota, Terpakai, Menunggu Review, Sisa Kuota), validasi pencegahan pengajuan melebihi kuota, dan upload berkas pendukung.
+- Riwayat Kehadiran: Rekap bulanan, jam kerja, dan KPI presensi.
+- Komplain Presensi: Pelaporan kendala presensi dengan bukti screenshot.
+- Slip Gaji: Pratinjau dan cetak slip gaji bulanan mandiri.
+- Profil & Notifikasi: Pembaruan data pribadi, rekening bank, serta lonceng notifikasi real-time.
+
+### 2. Portal Admin HR
+- Dashboard Monitoring: Statistik harian kehadiran pegawai dan daftar permohonan yang menunggu tindak lanjut.
+- Manajemen Pegawai & Shift: Pengelolaan data staf, penugasan multi-shift kerja, status akun, dan kuota cuti kustom.
+- Pengaturan Kantor & Geofencing: Peta interaktif Leaflet & OpenStreetMap, konfigurasi radius presensi, serta tarif tunjangan dan denda.
+- Verifikasi Cuti & Komplain: Tinjauan permohonan staf dengan info sisa cuti pegawai, sinkronisasi otomatis status presensi, dan dialog konfirmasi modern.
+- Estimator Payroll: Perhitungan gaji bersih otomatis berbasis kehadiran, tunjangan, dan denda, serta cetak slip gaji resmi.
+- Rekapitulasi Laporan: Filter multi-parameter, ringkasan KPI kehadiran, cetak laporan, dan ekspor CSV aman (proteksi formula injection).
+- Pengumuman & Hari Libur: Publikasi pengumuman kantor dan kalender hari libur operasional.
 
 ---
 
-### 2. Portal Manajemen HR & Administrator
-- **Dashboard & Analitik Presensi**:
-  - Ringkasan harian pegawai hadir, terlambat, izin/WFH, dan tidak hadir.
-  - Quick badge indikator pengajuan cuti dan komplain yang butuh respon segera.
-- **Rekapitulasi & Ekspor Laporan Presensi**:
-  - Filter rentang bulan, departemen, status kehadiran, dan pencarian NIK/Nama.
-  - 6 Kartu KPI statistik kehadiran bulanan.
-  - Tombol **Unduh CSV / Excel** (berstandar UTF-8 BOM agar rapi di Microsoft Excel) dan tombol **Cetak Laporan / PDF**.
-- **Pengaturan Lokasi Kantor & Geofencing GPS**:
-  - **Peta Interaktif Leaflet & OpenStreetMap**: Geser pin marker atau klik peta untuk menentukan titik koordinat kantor secara akurat.
-  - **Lingkaran Radius Geofence**: Visual lingkaran radius meter yang responsif terhadap input toleransi jarak.
-  - Tombol "Gunakan GPS Saya" untuk mengisi koordinat dari lokasi fisik admin.
-  - Konfigurasi tarif tunjangan makan/transport harian, denda keterlambatan, dan denda alpa.
-- **Papan Pengumuman Perusahaan**:
-  - Terbitkan pengumuman internal dengan badge kategori warna (*Informasi, Agenda, Peringatan, Mendesak*).
-  - Pengumuman aktif langsung muncul pada beranda presensi seluruh pegawai.
-- **Kalender Hari Libur Nasional & Cuti Bersama**:
-  - Manajemen hari libur resmi untuk mencegah sistem menandai alpa keliru pada hari libur operasional.
-  - Indikator otomatis hari libur terdekat pada dashboard pegawai.
-- **Estimator Penggajian (Payroll)**:
-  - Kalkulasi payroll bulanan otomatis satu-klik untuk seluruh pegawai aktif berdasarkan:
-    $$\text{Gaji Bersih} = \text{Gaji Pokok} + (\text{Hari Hadir} \times \text{Tunjangan}) - (\text{Hari Terlambat} \times \text{Denda}) - (\text{Hari Alpa} \times \text{Denda})$$
-  - Modal pratinjau dan cetak slip gaji pegawai resmi.
-  - Aksi "Tandai Lunas" yang otomatis mengirim notifikasi penerbitan slip ke akun pegawai.
-- **Manajemen Pegawai & Shift Kerja**:
-  - Pengelolaan master data pegawai, departemen, jabatan, dan nomor rekening payroll terenkripsi.
-  - Konfigurasi multi-shift kerja (jam mulai, jam pulang, batas toleransi menit, dan hari kerja aktif).
-- **Verifikasi Cuti & Komplain**:
-  - Jendela modal dialog terpusat (*centered modal*) dengan backdrop blur halus.
-  - Persetujuan cuti otomatis menyinkronkan data absensi harian pada rentang tanggal terkait.
-  - Penyelesaian komplain dengan opsi koreksi otomatis jam masuk, pulang, dan status presensi.
+## Teknologi yang Digunakan
+
+- Backend: Laravel 11, PHP 8.3
+- Frontend: Vue 3 (Composition API, `<script setup>`), Inertia.js v2
+- Styling: Tailwind CSS, Bootstrap Icons
+- Peta: Leaflet.js, OpenStreetMap
+- Database: MySQL 8.x
+- Otorisasi: Spatie Laravel Permission
+- Build Tool: Vite
+- Container: Docker & Docker Compose
 
 ---
 
-## 🛠️ Tumpukan Teknologi (Tech Stack)
+## Cara Menjalankan
 
-| Komponen | Teknologi |
-| :--- | :--- |
-| **Backend Framework** | [Laravel 13](https://laravel.com/) (PHP 8.3) |
-| **Client-Server Bridge** | [Inertia.js v2](https://inertiajs.com/) |
-| **Frontend Library** | [Vue 3](https://vuejs.org/) (Composition API, `<script setup>`) |
-| **Styling & CSS** | [Tailwind CSS](https://tailwindcss.com/) & Bootstrap Icons |
-| **Peta & Geofencing** | [Leaflet.js](https://leafletjs.com/) & OpenStreetMap |
-| **Database** | MySQL 8.x |
-| **Role & Permission** | [Spatie Laravel Permission](https://spatie.be/docs/laravel-permission) |
-| **Asset Bundler** | [Vite](https://vitejs.dev/) |
-| **Containerization** | Docker & Docker Compose (Nginx, PHP-FPM, MySQL 8, phpMyAdmin) |
+### Opsi 1: Menggunakan Docker (Direkomendasikan)
 
----
-
-## 🐳 Panduan Menjalankan via Docker (Direkomendasikan)
-
-Jika Anda ingin menjalankan aplikasi secara terisolasi menggunakan Docker & Docker Compose:
-
+1. Salin file konfigurasi environment:
 ```bash
-# 1. Salin konfigurasi Docker environment
 cp .env.docker.example .env
+```
 
-# 2. Bangun dan jalankan seluruh container
+2. Jalankan container:
+```bash
 docker compose up -d --build
+```
 
-# 3. Jalankan migrasi dan seeder dummy data
+3. Jalankan migrasi dan seeding data:
+```bash
 docker compose exec app php artisan migrate:fresh --seed
 ```
 
-- Akses aplikasi web di **`http://localhost:8000`**
-- Akses GUI database phpMyAdmin di **`http://localhost:8080`**
-- Panduan lengkap pengelolaan Docker dapat dilihat di file [DOCKER.md](DOCKER.md).
+- Aplikasi: `http://localhost:8000`
+- phpMyAdmin: `http://localhost:8080`
+- Panduan Docker lebih lanjut: [DOCKER.md](DOCKER.md)
 
----
+### Opsi 2: Instalasi Manual (Localhost)
 
-## 📦 Panduan Instalasi Manual (Tanpa Docker)
+Pastikan telah terpasang PHP >= 8.2, Composer, Node.js >= 18, dan MySQL.
 
-Pastikan sistem Anda telah terpasang **PHP >= 8.2**, **Composer**, **Node.js >= 18**, dan **MySQL**.
-
-### 1. Salin Repositori
-```bash
-git clone https://github.com/RissN/Absensi-app.git
-cd Absensi-app
-```
-
-### 2. Pasang Dependensi PHP & JavaScript
+1. Pasang dependensi:
 ```bash
 composer install
 npm install
 ```
 
-### 3. Salin Konfigurasi Lingkungan (.env)
+2. Konfigurasi environment:
 ```bash
 cp .env.example .env
-```
-Sesuaikan konfigurasi database Anda pada file `.env`:
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=absensi_app
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-### 4. Buat Kunci Aplikasi & Setup Database
-```bash
 php artisan key:generate
+```
+Sesuaikan konfigurasi database pada file `.env`.
+
+3. Setup database dan storage:
+```bash
 php artisan migrate:fresh --seed
 php artisan storage:link
 ```
 
-### 5. Kompilasi Aset Frontend
+4. Kompilasi aset:
 ```bash
 npm run build
 ```
-*(Untuk mode pengembangan dengan hot-reloading: `npm run dev`)*
+Untuk mode pengembangan: `npm run dev`
 
-### 6. Jalankan Server Aplikasi
+5. Jalankan server:
 ```bash
 php artisan serve
 ```
-Akses aplikasi melalui browser di tautan: **`http://localhost:8000`**
+Akses aplikasi di `http://localhost:8000`.
 
 ---
 
-## 🔑 Akun Demo & Kredensial Pengujian
+## Akun Demo Pengujian
 
-Pada halaman masuk (`/login`), tersedia opsi pengisian cepat demo akun untuk mempermudah evaluasi:
-
-| Peran | Email | Kata Sandi | Hak Akses |
+| Peran | Email | Kata Sandi | Keterangan |
 | :--- | :--- | :--- | :--- |
-| **Admin HR** | `admin@absensi.com` | `password` | Akses penuh dashboard, rekap laporan, geofencing kantor, pengumuman, hari libur, payroll, dan persetujuan cuti/komplain. |
-| **Pegawai (Demo 1)** | `budi@absensi.com` | `password` | Presensi selfie & GPS, riwayat kehadiran, pengajuan cuti, komplain absensi, dan cetak slip gaji. |
-| **Pegawai (Demo 2)** | `siti@absensi.com` | `password` | Pengujian interaksi notifikasi dan status shift kerja. |
+| Admin HR | `admin@absensi.com` | `password` | Akses penuh dashboard, pengaturan, laporan, dan verifikasi. |
+| Pegawai 1 | `budi@absensi.com` | `password` | Presensi GPS/selfie, saldo cuti, dan slip gaji. |
+| Pegawai 2 | `siti@absensi.com` | `password` | Akun staf operasional untuk pengujian notifikasi dan shift. |
 
 ---
 
-## 🛡️ Keamanan & Kualitas Kode
+## Keamanan Sistem
 
-- **Perlindungan Berkas Rahasia**: Konfigurasi [.gitignore](file:///c:/laragon/www/absensi-app/.gitignore) telah dikonfigurasi untuk mencegah kebocoran file kredensial `.env`, kunci privat, cache, sesi, dan berkas unggahan pengguna.
-- **Validasi Kustom**: Seluruh formulir menggunakan validasi kustom sisi klien dan server tanpa popup kaku bawaan browser (`novalidate`).
-- **Standardisasi Kode**: Diformat mengikuti standar PSR-12 menggunakan **Laravel Pint**.
-- **Unit Testing**: Pengujian formula matematika jarak geofencing Haversine dan formula kalkulasi payroll melalui PHPUnit.
+- Middleware penonaktifan akun real-time (`EnsureUserIsActive`).
+- Security Response Headers (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`).
+- Rate limiting pada endpoint mutasi data pegawai (`10 requests/menit`).
+- Sanitasi CSV dari potensi formula injection saat ekspor data.
+- Enkripsi session cookie dan nomor rekening payroll.
+- Validasi anti-spoofing GPS dan sanitasi format berkas upload.
 
 ---
 
-## 📄 Lisensi
+## Lisensi
+
 Aplikasi ini dirilis di bawah lisensi terbuka [MIT License](LICENSE).
