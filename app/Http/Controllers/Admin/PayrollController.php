@@ -61,7 +61,9 @@ class PayrollController extends Controller
         $lateDeductionRate = (float) Setting::get('rate_late_deduction', 25000);
         $absentDeductionRate = (float) Setting::get('rate_absent_deduction', 100000);
 
-        $employees = Employee::with('user')->where('status', 'active')->get();
+        $employees = Employee::with('user')->whereHas('user', function ($q) {
+            $q->where('is_active', true);
+        })->get();
 
         if ($employees->isEmpty()) {
             return redirect()->back()->with('error', 'Tidak ada pegawai aktif untuk dihitung gajinya.');
