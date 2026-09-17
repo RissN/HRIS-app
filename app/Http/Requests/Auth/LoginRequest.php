@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -49,8 +50,8 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             // Check if user exists but inactive
-            $user = \App\Models\User::where('email', $this->input('email'))->first();
-            if ($user && !$user->is_active) {
+            $user = User::where('email', $this->input('email'))->first();
+            if ($user && ! $user->is_active) {
                 throw ValidationException::withMessages([
                     'email' => 'Akun Anda dinonaktifkan. Silakan hubungi tim HR.',
                 ]);

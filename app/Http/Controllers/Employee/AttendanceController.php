@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
-use App\Models\Announcement;
 use App\Models\Attendance;
 use App\Models\Holiday;
 use App\Models\Setting;
@@ -41,8 +40,7 @@ class AttendanceController extends Controller
             ->take(7)
             ->get();
 
-        // Announcements & Holidays
-        $announcements = Announcement::where('is_active', true)->latest()->take(3)->get();
+        // Upcoming Holidays notice
         $upcomingHolidays = Holiday::where('date', '>=', $today)
             ->orderBy('date', 'asc')
             ->take(3)
@@ -53,7 +51,6 @@ class AttendanceController extends Controller
             'schedule' => $currentSchedule,
             'todayAttendance' => $todayAttendance,
             'recentAttendances' => $recentAttendances,
-            'announcements' => $announcements,
             'upcomingHolidays' => $upcomingHolidays,
             'officeLocation' => [
                 'name' => Setting::get('office_name', 'Kantor Pusat Jakarta'),

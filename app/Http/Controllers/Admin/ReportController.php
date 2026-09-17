@@ -113,7 +113,7 @@ class ReportController extends Controller
                 fputcsv($file, [
                     $no++,
                     $record->date ? Carbon::parse($record->date)->translatedFormat('d-m-Y') : '-',
-                    $this->escapeCsvValue($record->employee?->nik ?? '-'),
+                    $this->escapeCsvValue($record->employee?->employee_code ?? '-'),
                     $this->escapeCsvValue($record->employee?->user?->name ?? '-'),
                     $this->escapeCsvValue($record->employee?->department ?? '-'),
                     $this->escapeCsvValue($record->employee?->position ?? '-'),
@@ -151,10 +151,12 @@ class ReportController extends Controller
 
         if ($search) {
             $query->whereHas('employee', function ($q) use ($search) {
-                $q->where('nik', 'like', "%{$search}%")
-                    ->orWhereHas('user', function ($uq) use ($search) {
-                        $uq->where('name', 'like', "%{$search}%");
-                    });
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('employee_code', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($uq) use ($search) {
+                            $uq->where('name', 'like', "%{$search}%");
+                        });
+                });
             });
         }
 

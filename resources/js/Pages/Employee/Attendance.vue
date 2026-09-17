@@ -222,32 +222,6 @@ const formatDate = (dateStr) => {
     <Head title="Presensi Hari Ini" />
 
     <div class="max-w-2xl mx-auto space-y-5">
-      <!-- Announcements Banner -->
-      <div v-if="announcements && announcements.length > 0" class="space-y-2.5">
-        <div
-          v-for="ann in announcements"
-          :key="ann.id"
-          class="p-4 rounded-2xl border text-sm flex items-start gap-3.5 transition shadow-xs"
-          :class="{
-            'bg-blue-50/90 border-blue-200/80 text-blue-900': ann.type === 'info' || ann.type === 'primary',
-            'bg-amber-50/90 border-amber-200/80 text-amber-950': ann.type === 'warning',
-            'bg-rose-50/90 border-rose-200/80 text-rose-950': ann.type === 'danger',
-          }"
-        >
-          <div class="mt-0.5 text-lg shrink-0">
-            <i v-if="ann.type === 'warning'" class="bi bi-exclamation-triangle-fill text-amber-600"></i>
-            <i v-else-if="ann.type === 'danger'" class="bi bi-shield-exclamation text-rose-600"></i>
-            <i v-else class="bi bi-megaphone-fill text-blue-600"></i>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between gap-2 mb-0.5">
-              <h4 class="font-bold text-xs uppercase tracking-wider opacity-90">{{ ann.title }}</h4>
-              <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-white/60">Pengumuman</span>
-            </div>
-            <p class="text-xs leading-relaxed opacity-85">{{ ann.content }}</p>
-          </div>
-        </div>
-      </div>
 
       <!-- Upcoming Holiday Notice -->
       <div

@@ -325,8 +325,8 @@ const formatMonthName = (monthStr) => {
             <strong class="text-slate-900">{{ activePayslip.employee?.user?.name }}</strong>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-500">NIK:</span>
-            <span class="font-mono text-slate-800">{{ activePayslip.employee?.nik || '-' }}</span>
+            <span class="text-slate-500">ID Pegawai:</span>
+            <span class="font-mono text-slate-800">{{ activePayslip.employee?.employee_code || activePayslip.employee?.nik || '-' }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-slate-500">Jabatan:</span>

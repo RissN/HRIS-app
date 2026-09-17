@@ -5,12 +5,15 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import LeaveRequestModal from '@/Components/LeaveRequestModal.vue';
 import ComplaintOffcanvas from '@/Components/ComplaintOffcanvas.vue';
+import JakartaDistributionMap from '@/Components/JakartaDistributionMap.vue';
 
 const props = defineProps({
   stats: Object,
+  transjakartaStats: Object,
   filters: Object,
   departments: Array,
   attendances: Array,
+  totalAttendancesToday: Number,
   pendingLeaveRequests: Array,
   pendingComplaints: Array,
 });
@@ -68,8 +71,13 @@ const formatDate = (dateStr) => {
       <div class="bg-white rounded-3xl border border-slate-100 p-5 sm:p-6 shadow-xs">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Dashboard Monitoring Presensi</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Ringkasan aktivitas kehadiran harian seluruh pegawai dan tindakan peninjauan.</p>
+            <div class="flex items-center gap-2">
+              <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Dashboard Operasional SDM Transjakarta</h1>
+              <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-blue-600 text-white tracking-wide uppercase">
+                Transjakarta
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">Monitoring persebaran pegawai per wilayah, status kepegawaian, dan rekap absensi harian.</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
@@ -90,6 +98,12 @@ const formatDate = (dateStr) => {
           </div>
         </div>
       </div>
+
+      <!-- TRANSJAKARTA INTERACTIVE REGIONAL DISTRIBUTION MAP -->
+      <JakartaDistributionMap 
+        v-if="transjakartaStats" 
+        :distribution="transjakartaStats" 
+      />
 
       <!-- 4 Stats Cards Grid -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -227,21 +241,27 @@ const formatDate = (dateStr) => {
 
       <!-- Today's Attendance Table Card -->
       <div class="bg-white rounded-3xl border border-slate-100 shadow-xs overflow-hidden">
-        <div class="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between">
+        <div class="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
               <i class="bi bi-calendar-check text-base"></i>
             </div>
             <div>
               <h2 class="text-sm font-bold text-slate-900">
-                Daftar Presensi Hari Ini ({{ formatDate(filters.date) }})
+                Log Aktivitas Presensi Hari Ini ({{ formatDate(filters.date) }})
               </h2>
-              <p class="text-xs text-slate-400">Log kehadiran pegawai yang tercatat hari ini</p>
+              <p class="text-xs text-slate-400">
+                Menampilkan 15 aktivitas terbaru &bull; Total absensi tercatat hari ini: <span class="font-bold text-slate-700">{{ totalAttendancesToday?.toLocaleString('id-ID') || 0 }}</span>
+              </p>
             </div>
           </div>
-          <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
-            {{ attendances?.length || 0 }} Pegawai
-          </span>
+          <Link 
+            :href="route('admin.attendance.index')"
+            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-xs font-semibold transition-colors shrink-0"
+          >
+            <span>Semua Data Presensi ({{ totalAttendancesToday?.toLocaleString('id-ID') || 0 }})</span>
+            <i class="bi bi-arrow-right"></i>
+          </Link>
         </div>
 
         <div v-if="attendances && attendances.length > 0" class="overflow-x-auto">

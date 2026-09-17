@@ -58,7 +58,7 @@ watch(flash, (newFlash) => {
     </header>
 
     <!-- Main Content Area -->
-    <div class="md:pl-64 flex-1 flex flex-col pb-24 md:pb-6 min-h-screen">
+    <div class="md:pl-64 flex-1 flex flex-col pb-28 md:pb-6 min-h-screen">
       <!-- Desktop Top Header Bar -->
       <header class="hidden md:flex sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-6 py-3.5 items-center justify-between shadow-xs">
         <div class="flex items-center gap-2">

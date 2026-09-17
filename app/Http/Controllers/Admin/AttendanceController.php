@@ -31,12 +31,17 @@ class AttendanceController extends Controller
         }
 
         if ($search) {
-            $query->whereHas('employee.user', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
+            $query->whereHas('employee', function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('employee_code', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($uq) use ($search) {
+                            $uq->where('name', 'like', "%{$search}%");
+                        });
+                });
             });
         }
 
-        $attendances = $query->orderBy('check_in_at', 'asc')->get();
+        $attendances = $query->orderBy('check_in_at', 'asc')->paginate(20)->withQueryString();
 
         $departments = Employee::select('department')->distinct()->pluck('department');
 

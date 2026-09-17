@@ -1,13 +1,18 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import Pagination from '@/Components/Pagination.vue';
 
 const props = defineProps({
-  attendances: Array,
+  attendances: [Object, Array],
   departments: Array,
   filters: Object,
+});
+
+const attendanceList = computed(() => {
+  return Array.isArray(props.attendances) ? props.attendances : (props.attendances?.data || []);
 });
 
 const filterDate = ref(props.filters.date || '');
@@ -102,7 +107,7 @@ const formatDate = (dateStr) => {
             <p class="text-xs text-slate-500 mt-0.5">Pantau data kehadiran real-time seluruh pegawai dan lakukan koreksi jika diperlukan.</p>
           </div>
           <div class="text-xs text-slate-400 font-medium">
-            Total Record: <strong class="text-slate-800">{{ attendances?.length || 0 }}</strong>
+            Total Record: <strong class="text-slate-800">{{ (attendances?.total ?? attendances?.length ?? 0).toLocaleString('id-ID') }}</strong>
           </div>
         </div>
 
@@ -112,7 +117,7 @@ const formatDate = (dateStr) => {
               v-model="search" 
               type="text" 
               class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" 
-              placeholder="Cari nama atau jabatan pegawai..." 
+              placeholder="Cari nama atau ID pegawai (contoh: Budi, TJT1001)..." 
               @keyup.enter="applyFilter"
             />
           </div>
@@ -156,56 +161,77 @@ const formatDate = (dateStr) => {
 
       <!-- Attendance Table Card -->
       <div class="bg-white rounded-3xl border border-slate-100 shadow-xs overflow-hidden">
-        <div v-if="attendances && attendances.length > 0" class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead>
-              <tr class="bg-slate-50/60 border-b border-slate-100 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
-                <th class="py-3 px-4">Pegawai</th>
-                <th class="py-3 px-4">Tanggal</th>
-                <th class="py-3 px-4">Jam Masuk</th>
-                <th class="py-3 px-4">Jam Keluar</th>
-                <th class="py-3 px-4">Status</th>
-                <th class="py-3 px-4">Keterangan / Bukti</th>
-                <th class="py-3 px-4 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-              <tr v-for="att in attendances" :key="att.id" class="hover:bg-slate-50/70 transition-colors">
-                <td class="py-3 px-4">
-                  <div class="font-bold text-slate-900 text-xs">{{ att.employee?.user?.name }}</div>
-                  <div class="text-[11px] text-slate-500">{{ att.employee?.position }} &bull; {{ att.employee?.department }}</div>
-                </td>
-                <td class="py-3 px-4 font-medium text-slate-700 whitespace-nowrap">{{ formatDate(att.date) }}</td>
-                <td class="py-3 px-4 font-bold text-emerald-600 whitespace-nowrap">{{ formatTime(att.check_in_at) }}</td>
-                <td class="py-3 px-4 font-bold text-blue-600 whitespace-nowrap">{{ formatTime(att.check_out_at) }}</td>
-                <td class="py-3 px-4 whitespace-nowrap"><StatusBadge :status="att.status" /></td>
-                <td class="py-3 px-4">
-                  <div class="flex items-center gap-2">
-                    <a 
-                      v-if="att.photo_path" 
-                      :href="att.photo_path" 
-                      target="_blank" 
-                      title="Lihat Foto Selfie" 
-                      class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors"
+        <div v-if="attendanceList && attendanceList.length > 0">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="bg-slate-50/60 border-b border-slate-100 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+                  <th class="py-3 px-4">Pegawai</th>
+                  <th class="py-3 px-4">Tanggal</th>
+                  <th class="py-3 px-4">Jam Masuk</th>
+                  <th class="py-3 px-4">Jam Keluar</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4">Keterangan / Bukti</th>
+                  <th class="py-3 px-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr v-for="att in attendanceList" :key="att.id" class="hover:bg-slate-50/70 transition-colors">
+                  <td class="py-3 px-4">
+                    <div class="flex items-center gap-2">
+                      <span class="font-bold text-slate-900 text-xs">{{ att.employee?.user?.name || '-' }}</span>
+                      <span v-if="att.employee?.employee_code" class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">
+                        {{ att.employee.employee_code }}
+                      </span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">
+                      {{ att.employee?.position }} &bull; {{ att.employee?.department }}
+                      <span v-if="att.employee?.region_label" class="text-slate-400">&bull; {{ att.employee.region_label }}</span>
+                    </div>
+                  </td>
+                  <td class="py-3 px-4 font-medium text-slate-700 whitespace-nowrap">{{ formatDate(att.date) }}</td>
+                  <td class="py-3 px-4 font-bold text-emerald-600 whitespace-nowrap">{{ formatTime(att.check_in_at) }}</td>
+                  <td class="py-3 px-4 font-bold text-blue-600 whitespace-nowrap">{{ formatTime(att.check_out_at) }}</td>
+                  <td class="py-3 px-4 whitespace-nowrap"><StatusBadge :status="att.status" /></td>
+                  <td class="py-3 px-4">
+                    <div class="flex items-center gap-2">
+                      <a 
+                        v-if="att.photo_path" 
+                        :href="att.photo_path" 
+                        target="_blank" 
+                        title="Lihat Foto Selfie" 
+                        class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors"
+                      >
+                        <i class="bi bi-camera text-xs"></i>
+                      </a>
+                      <span class="text-slate-600 max-w-xs truncate text-[11px]">{{ att.note || '-' }}</span>
+                    </div>
+                  </td>
+                  <td class="py-3 px-4 text-right whitespace-nowrap">
+                    <button 
+                      type="button" 
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/80 transition-colors cursor-pointer" 
+                      @click="openEdit(att)"
                     >
-                      <i class="bi bi-camera text-xs"></i>
-                    </a>
-                    <span class="text-slate-600 max-w-xs truncate text-[11px]">{{ att.note || '-' }}</span>
-                  </div>
-                </td>
-                <td class="py-3 px-4 text-right whitespace-nowrap">
-                  <button 
-                    type="button" 
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/80 transition-colors cursor-pointer" 
-                    @click="openEdit(att)"
-                  >
-                    <i class="bi bi-pencil-square"></i>
-                    <span>Koreksi</span>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                      <i class="bi bi-pencil-square"></i>
+                      <span>Koreksi</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Controls -->
+          <div class="p-4 border-t border-slate-100">
+            <Pagination 
+              v-if="attendances?.links" 
+              :links="attendances.links" 
+              :from="attendances.from" 
+              :to="attendances.to" 
+              :total="attendances.total" 
+            />
+          </div>
         </div>
         <div v-else class="text-center py-14 text-slate-400 text-xs">
           <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">

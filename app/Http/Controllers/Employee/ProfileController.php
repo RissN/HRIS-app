@@ -43,7 +43,7 @@ class ProfileController extends Controller
     public function updateBank(Request $request)
     {
         $employee = $request->user()->employee;
-        if (!$employee) {
+        if (! $employee) {
             return back()->with('error', 'Profil pegawai tidak ditemukan.');
         }
 
@@ -77,7 +77,7 @@ class ProfileController extends Controller
     public function updateAvatar(Request $request)
     {
         $employee = $request->user()->employee;
-        if (!$employee) {
+        if (! $employee) {
             return back()->with('error', 'Profil pegawai tidak ditemukan.');
         }
 
@@ -86,11 +86,11 @@ class ProfileController extends Controller
         ]);
 
         $file = $request->file('avatar');
-        $fileName = 'avatar_' . $employee->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $fileName = 'avatar_'.$employee->id.'_'.time().'.'.$file->getClientOriginalExtension();
         $path = $file->storeAs('avatars', $fileName, 'public');
 
         $employee->update([
-            'avatar' => '/storage/' . $path,
+            'avatar' => '/storage/'.$path,
         ]);
 
         return back()->with('success', 'Foto profil berhasil diperbarui.');

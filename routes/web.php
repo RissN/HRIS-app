@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Employee\AttendanceController as EmployeeAttendanceController;
 use App\Http\Controllers\Employee\ComplaintController as EmployeeComplaintController;
+use App\Http\Controllers\Employee\DashboardController as EmployeeDashboardController;
 use App\Http\Controllers\Employee\LeaveRequestController as EmployeeLeaveRequestController;
 use App\Http\Controllers\Employee\PayrollController as EmployeePayrollController;
 use App\Http\Controllers\Employee\ProfileController as EmployeeProfileController;
@@ -28,7 +29,7 @@ Route::get('/', function () {
             return redirect()->route('admin.dashboard');
         }
 
-        return redirect()->route('employee.attendance');
+        return redirect()->route('employee.dashboard');
     }
 
     return redirect()->route('login');
@@ -41,13 +42,16 @@ Route::get('/dashboard', function () {
         return redirect()->route('admin.dashboard');
     }
 
-    return redirect()->route('employee.attendance');
+    return redirect()->route('employee.dashboard');
 })->middleware(['auth'])->name('dashboard');
 
 // ==========================================
 // EMPLOYEE ROUTES (Role: Pegawai)
 // ==========================================
 Route::middleware(['auth', 'role:pegawai'])->prefix('employee')->name('employee.')->group(function () {
+    // Dashboard (Events & Announcements)
+    Route::get('/dashboard', [EmployeeDashboardController::class, 'index'])->name('dashboard');
+
     // Attendance
     Route::get('/attendance', [EmployeeAttendanceController::class, 'index'])->name('attendance');
     Route::post('/attendance/check-in', [EmployeeAttendanceController::class, 'checkIn'])->middleware('throttle:10,1')->name('attendance.check-in');

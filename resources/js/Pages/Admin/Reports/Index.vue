@@ -314,7 +314,7 @@ const formatMonthName = (monthStr) => {
                     </div>
                     <div>
                       <div class="font-semibold text-slate-900">{{ att.employee?.user?.name || '-' }}</div>
-                      <div class="text-xs text-slate-400 font-mono">{{ att.employee?.nik || '-' }}</div>
+                      <div class="text-xs text-slate-400 font-mono">{{ att.employee?.employee_code || att.employee?.nik || '-' }}</div>
                     </div>
                   </div>
                 </td>

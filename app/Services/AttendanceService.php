@@ -48,12 +48,12 @@ class AttendanceService
      */
     public static function determineStatus(Carbon $checkInTime, ?WorkSchedule $schedule): string
     {
-        if (!$schedule) {
+        if (! $schedule) {
             return 'present';
         }
 
         $today = $checkInTime->toDateString();
-        $startTime = Carbon::parse($today . ' ' . $schedule->start_time);
+        $startTime = Carbon::parse($today.' '.$schedule->start_time);
         $toleranceLimit = $startTime->copy()->addMinutes($schedule->tolerance_minutes);
 
         if ($checkInTime->greaterThan($toleranceLimit)) {
@@ -72,7 +72,7 @@ class AttendanceService
         $current = $startDate->copy();
 
         while ($current->lte($endDate)) {
-            if (!$current->isWeekend()) {
+            if (! $current->isWeekend()) {
                 $days++;
             }
             $current->addDay();

@@ -179,6 +179,15 @@ const isUrlActive = (path) => {
       <!-- Employee Menu -->
       <template v-else>
         <Link 
+          :href="route('employee.dashboard')" 
+          class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
+          :class="isUrlActive('/employee/dashboard') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+        >
+          <i class="bi bi-grid-1x2-fill text-base"></i>
+          <span>Dashboard</span>
+        </Link>
+
+        <Link 
           :href="route('employee.attendance')" 
           class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
           :class="currentRoute === '/employee/attendance' ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
