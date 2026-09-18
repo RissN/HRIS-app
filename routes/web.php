@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\EmployeeController as AdminEmployeeController;
 use App\Http\Controllers\Admin\HolidayController as AdminHolidayController;
 use App\Http\Controllers\Admin\LeaveRequestController as AdminLeaveRequestController;
 use App\Http\Controllers\Admin\PayrollController as AdminPayrollController;
+use App\Http\Controllers\Admin\PerformanceController as AdminPerformanceController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
@@ -116,6 +117,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Reports & Export
     Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/export', [AdminReportController::class, 'exportCsv'])->name('reports.export');
+
+    // Performance, Employee of the Month & HR Appreciation
+    Route::get('/performance', [AdminPerformanceController::class, 'index'])->name('performance.index');
+    Route::post('/performance/appreciations', [AdminPerformanceController::class, 'storeAppreciation'])->name('performance.appreciations.store');
+    Route::delete('/performance/appreciations/{appreciation}', [AdminPerformanceController::class, 'destroyAppreciation'])->name('performance.appreciations.destroy');
+    Route::get('/employees/{employee}/summary', [AdminPerformanceController::class, 'employeeSummary'])->name('employees.summary');
 
     // Leave Requests Management
     Route::get('/leave-requests', [AdminLeaveRequestController::class, 'index'])->name('leave-requests.index');

@@ -104,6 +104,18 @@ const isUrlActive = (path) => {
         </Link>
 
         <Link 
+          :href="route('admin.performance.index')" 
+          class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
+          :class="isUrlActive('/admin/performance') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+        >
+          <i class="bi bi-trophy-fill text-base text-amber-500"></i>
+          <span class="flex items-center justify-between flex-1">
+            <span>Kinerja & EotM</span>
+            <span class="px-1.5 py-0.2 text-[9px] font-black uppercase rounded-md bg-amber-100 text-amber-800 tracking-wider">Top</span>
+          </span>
+        </Link>
+
+        <Link 
           :href="route('admin.payroll.index')" 
           class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
           :class="isUrlActive('/admin/payroll') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"

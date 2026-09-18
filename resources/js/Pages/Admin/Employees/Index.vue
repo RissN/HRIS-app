@@ -4,6 +4,7 @@ import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
+import EmployeeDetailModal from '@/Components/EmployeeDetailModal.vue';
 
 const props = defineProps({
   employees: Object, // Paginated { data: [], links: [], ... }
@@ -58,6 +59,14 @@ const confirmToggle = () => {
       employeeToToggle.value = null;
     },
   });
+};
+
+const showDetailModal = ref(false);
+const selectedEmployeeId = ref(null);
+
+const openDetail = (empId) => {
+  selectedEmployeeId.value = empId;
+  showDetailModal.value = true;
 };
 
 const getStatusBadgeClass = (status) => {
@@ -339,9 +348,9 @@ const getRegionBadgeClass = (reg) => {
                         class="w-9 h-9 rounded-full object-cover ring-1 ring-slate-200 shrink-0" 
                         alt="Avatar"
                       />
-                      <div>
+                      <div class="cursor-pointer group" @click="openDetail(emp.id)">
                         <div class="flex items-center gap-1.5 flex-wrap">
-                          <span class="font-bold text-slate-900 text-xs">{{ emp.name }}</span>
+                          <span class="font-bold text-slate-900 text-xs group-hover:text-blue-600 transition-colors">{{ emp.name }}</span>
                           <span v-if="emp.employee_code" class="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-slate-100 text-slate-700 rounded border border-slate-200">
                             {{ emp.employee_code }}
                           </span>
@@ -387,6 +396,15 @@ const getRegionBadgeClass = (reg) => {
                   </td>
                   <td class="py-3.5 px-3 text-right">
                     <div class="inline-flex items-center gap-1.5">
+                      <button 
+                        type="button" 
+                        @click="openDetail(emp.id)" 
+                        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer"
+                        title="Lihat Rekapan Profil & Rapor Karyawan"
+                      >
+                        <i class="bi bi-window-sidebar"></i>
+                        <span>Rapor</span>
+                      </button>
                       <Link 
                         :href="route('admin.employees.edit', emp.id)" 
                         class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
@@ -439,6 +457,13 @@ const getRegionBadgeClass = (reg) => {
       :loading="toggleForm.processing"
       @close="showToggleModal = false"
       @confirm="confirmToggle"
+    />
+
+    <!-- Employee 360 Recap Detail Modal -->
+    <EmployeeDetailModal
+      :show="showDetailModal"
+      :employee-id="selectedEmployeeId"
+      @close="showDetailModal = false"
     />
   </AdminLayout>
 </template>

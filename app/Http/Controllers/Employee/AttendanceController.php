@@ -8,6 +8,7 @@ use App\Models\Holiday;
 use App\Models\Setting;
 use App\Models\WorkSchedule;
 use App\Services\AttendanceService;
+use App\Services\PerformanceScoringService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -130,7 +131,7 @@ class AttendanceController extends Controller
             $photoPath = '/storage/'.$fileName;
         }
 
-        Attendance::updateOrCreate(
+        $attendance = Attendance::updateOrCreate(
             [
                 'employee_id' => $employee->id,
                 'date' => $today,
@@ -144,6 +145,8 @@ class AttendanceController extends Controller
                 'photo_path' => $photoPath,
             ]
         );
+
+        app(PerformanceScoringService::class)->syncDailyScoreForAttendance($attendance);
 
         return back()->with('success', 'Check-in berhasil dicatat!');
     }

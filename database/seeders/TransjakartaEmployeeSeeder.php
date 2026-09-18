@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Attendance;
 use App\Models\Employee;
-use App\Models\User;
 use App\Models\WorkSchedule;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -101,20 +100,57 @@ class TransjakartaEmployeeSeeder extends Seeder
             ],
         ];
 
-        $firstNames = [
-            'Budi', 'Siti', 'Agus', 'Dewi', 'Joko', 'Rina', 'Bambang', 'Sri', 'Hendra', 'Ratna',
-            'Fajar', 'Nur', 'Eko', 'Indah', 'Wahyu', 'Dian', 'Bayu', 'Putri', 'Rizky', 'Maya',
-            'Arif', 'Mega', 'Aditya', 'Tari', 'Doni', 'Fitri', 'Ilham', 'Wulan', 'Gilang', 'Gita',
-            'Surya', 'Anisa', 'Dimas', 'Nadia', 'Rian', 'Lestari', 'Teguh', 'Ayu', 'Yoga', 'Rani',
-            'Dedi', 'Yuni', 'Faisal', 'Ratih', 'Angga', 'Siska', 'Prasetyo', 'Nita', 'Heru', 'Sari',
+        $maleFirst = [
+            'Ahmad', 'Budi', 'Agus', 'Joko', 'Bambang', 'Hendra', 'Fajar', 'Eko', 'Wahyu', 'Bayu',
+            'Rizky', 'Arif', 'Aditya', 'Doni', 'Ilham', 'Gilang', 'Surya', 'Dimas', 'Rian', 'Teguh',
+            'Yoga', 'Dedi', 'Faisal', 'Angga', 'Prasetyo', 'Heru', 'Faris', 'Hadi', 'Tri', 'Danang',
+            'Yudi', 'Taufik', 'Iwan', 'Rahmat', 'Firman', 'Bagus', 'Hasan', 'Lukman', 'Rudi', 'Gunawan',
+            'Zainal', 'Farhan', 'Rangga', 'Alif', 'Wildan', 'Syahrul', 'Ridwan', 'Panji', 'Pandu', 'Guntur',
+            'Gading', 'Cahyo', 'Asep', 'Dadang', 'Cecep', 'Maman', 'Ade', 'Ujang', 'Irfan', 'Anwar',
+            'Imam', 'Iqbal', 'Wahid', 'Sholeh', 'Zulham', 'Dwi', 'Kurnia', 'Sulistyo', 'Maulana', 'Ridho',
+            'Satria', 'Bagas', 'Rendra', 'Yusuf', 'Indra', 'Reza', 'Sigit', 'Wawan', 'Candra', 'Galih',
+        ];
+
+        $maleMiddle = [
+            'Agung', 'Bagus', 'Cahya', 'Dwi', 'Eka', 'Fajar', 'Giri', 'Hadi', 'Indra', 'Jaya',
+            'Kusuma', 'Laksana', 'Mulya', 'Nugraha', 'Purnama', 'Putra', 'Raden', 'Satria', 'Tri', 'Utama',
+            'Wira', 'Yuda', 'Bhakti', 'Chandra', 'Dharma', 'Firmansyah', 'Gemilang', 'Hakim', 'Iskandar', 'Kurnia',
+            'Mahendra', 'Nasrullah', 'Pratama', 'Ramadhan', 'Saputra', 'Taufiq', 'Wardhana', 'Yusuf', 'Alamsyah', 'Budiman',
+            'Cahyadi', 'Darmawan', 'Effendi', 'Gunawan', 'Hamzah', 'Ilyas', 'Kuncoro', 'Lesmana', 'Mardiansyah', 'Novian',
+        ];
+
+        $femaleFirst = [
+            'Siti', 'Dewi', 'Rina', 'Sri', 'Ratna', 'Nur', 'Indah', 'Dian', 'Putri', 'Maya',
+            'Mega', 'Tari', 'Fitri', 'Wulan', 'Gita', 'Anisa', 'Nadia', 'Lestari', 'Ayu', 'Rani',
+            'Yuni', 'Ratih', 'Siska', 'Nita', 'Sari', 'Nurul', 'Novi', 'Rahayu', 'Kartika', 'Widiastuti',
+            'Amalia', 'Safitri', 'Latifah', 'Marlina', 'Endang', 'Retno', 'Triana', 'Desi', 'Ika', 'Anggraini',
+            'Yuliana', 'Astuti', 'Puspa', 'Susanti', 'Melati', 'Kusumawati', 'Sulastri', 'Suci', 'Hana', 'Zahra',
+        ];
+
+        $femaleMiddle = [
+            'Aulia', 'Bella', 'Citra', 'Dian', 'Elvira', 'Febriani', 'Gisela', 'Hapsari', 'Intan', 'Juwita',
+            'Kharisma', 'Larasati', 'Melati', 'Nirmala', 'Oktavia', 'Puspa', 'Qonita', 'Rizkia', 'Suci', 'Tantri',
+            'Wulandari', 'Anggraeni', 'Permatasari', 'Dewi', 'Lestari', 'Putri', 'Rahmawati', 'Kusuma', 'Maharani', 'Pratiwi',
         ];
 
         $lastNames = [
-            'Santoso', 'Rahmawati', 'Kusuma', 'Pratama', 'Hidayat', 'Saputra', 'Wibowo', 'Utami',
-            'Nugroho', 'Wijaya', 'Setiawan', 'Permana', 'Lestari', 'Siregar', 'Purnomo', 'Nasution',
-            'Kurniawan', 'Firmansyah', 'Suryono', 'Ramadhan', 'Gunawan', 'Supriadi', 'Subekti',
-            'Handayani', 'Widodo', 'Hartono', 'Pangestu', 'Suharto', 'Pramono', 'Mustofa',
+            'Santoso', 'Rahmawati', 'Kusuma', 'Pratama', 'Hidayat', 'Saputra', 'Wibowo', 'Utami', 'Nugroho', 'Wijaya',
+            'Setiawan', 'Permana', 'Lestari', 'Siregar', 'Purnomo', 'Nasution', 'Kurniawan', 'Firmansyah', 'Suryono', 'Ramadhan',
+            'Gunawan', 'Supriadi', 'Subekti', 'Handayani', 'Widodo', 'Hartono', 'Pangestu', 'Suharto', 'Pramono', 'Mustofa',
+            'Simanjuntak', 'Hutapea', 'Sitorus', 'Panjaitan', 'Sinaga', 'Pasaribu', 'Lubis', 'Harahap', 'Batubara', 'Daulay',
+            'Tanjung', 'Chaniago', 'Piliang', 'Koto', 'Sikumbang', 'Ginting', 'Tarigan', 'Sembiring', 'Karo-Karo', 'Perangin-Angin',
+            'Sujatmiko', 'Sudirman', 'Mangkualam', 'Kertanegara', 'Prabowo', 'Hardjono', 'Sumantri', 'Suhendra', 'Daniswara',
+            'Mulyono', 'Subagyo', 'Purwanto', 'Haryanto', 'Kusnadi', 'Budiman', 'Iskandar', 'Wicaksono', 'Pambudi', 'Wardoyo',
+            'Sastrowardoyo', 'Baskoro', 'Baskara', 'Prakoso', 'Maheswara', 'Dananjaya', 'Ardiansyah', 'Budiyanto', 'Hermawan',
+            'Al-Fatih', 'Al-Ghifari', 'Al-Farizi', 'Al-Banjari', 'Al-Habsyi', 'Assegaf', 'Al-Idrus', 'Al-Attas', 'Al-Kaff',
+            'Sihombing', 'Manurung', 'Situmorang', 'Nainggolan', 'Simatupang', 'Sitompul', 'Marpaung', 'Nababan', 'Tambunan', 'Siagian',
+            'Subianto', 'Wahyudi', 'Priambodo', 'Sulaiman', 'Zulkarnaen', 'Syahputra', 'Hasibuan', 'Pohan', 'Matondang',
         ];
+
+        $usedNames = [];
+        foreach (DB::table('users')->pluck('name')->toArray() as $existingName) {
+            $usedNames[$existingName] = true;
+        }
 
         $today = Carbon::today()->toDateString();
         $now = Carbon::now();
@@ -131,11 +167,21 @@ class TransjakartaEmployeeSeeder extends Seeder
         $vendorCounter = 2003;
         $magangCounter = 1101;
 
-        // Clear existing employees and non-admin users if this is a fresh seeding
-        $this->command->info('Memulai seeding 3.520 Karyawan Transjakarta...');
+        // Clean previous bulk employees (user_id > 6) if re-seeding
+        $bulkUserIds = DB::table('users')->where('role', 'pegawai')->where('id', '>', 6)->pluck('id')->toArray();
+        if (! empty($bulkUserIds)) {
+            $bulkEmpIds = DB::table('employees')->whereIn('user_id', $bulkUserIds)->pluck('id')->toArray();
+            DB::table('attendances')->whereIn('employee_id', $bulkEmpIds)->delete();
+            DB::table('employee_daily_scores')->whereIn('employee_id', $bulkEmpIds)->delete();
+            DB::table('employee_appreciations')->whereIn('employee_id', $bulkEmpIds)->delete();
+            DB::table('employee_schedules')->whereIn('employee_id', $bulkEmpIds)->delete();
+            DB::table('employees')->whereIn('id', $bulkEmpIds)->delete();
+            DB::table('model_has_roles')->whereIn('model_id', $bulkUserIds)->where('model_type', 'App\Models\User')->delete();
+            DB::table('users')->whereIn('id', $bulkUserIds)->delete();
+        }
 
-        // To avoid email collision, get max user id
-        $startId = (int) DB::table('users')->max('id') + 1;
+        $this->command->info('Memulai seeding 3.520 Karyawan Transjakarta dengan nama asli...');
+        $startId = 7;
 
         foreach ($regionConfigs as $regionKey => $cfg) {
             $pools = $cfg['pools'];
@@ -194,10 +240,28 @@ class TransjakartaEmployeeSeeder extends Seeder
             shuffle($allItems);
 
             foreach ($allItems as $item) {
-                $fName = $firstNames[($globalCounter + crc32($regionKey)) % count($firstNames)];
-                $lName = $lastNames[($globalCounter * 3) % count($lastNames)];
-                $name = $fName.' '.$lName.' '.($globalCounter <= 50 ? '' : ($globalCounter % 100));
-                $name = trim($name);
+                $isMale = ($globalCounter % 10 < 7);
+                $fList = $isMale ? $maleFirst : $femaleFirst;
+                $mList = $isMale ? $maleMiddle : $femaleMiddle;
+
+                $fIdx = ($globalCounter + crc32($regionKey)) % count($fList);
+                $mIdx = ($globalCounter * 7 + (int) ($globalCounter / count($fList))) % count($mList);
+                $lIdx = ($globalCounter * 13 + (int) ($globalCounter / count($mList))) % count($lastNames);
+
+                if ($globalCounter % 3 === 0) {
+                    $name = $fList[$fIdx].' '.$lastNames[$lIdx];
+                } else {
+                    $name = $fList[$fIdx].' '.$mList[$mIdx].' '.$lastNames[$lIdx];
+                }
+
+                $collisionOffset = 1;
+                while (isset($usedNames[$name])) {
+                    $mIdx = ($mIdx + $collisionOffset) % count($mList);
+                    $lIdx = ($lIdx + $collisionOffset) % count($lastNames);
+                    $name = $fList[$fIdx].' '.$mList[$mIdx].' '.$lastNames[$lIdx];
+                    $collisionOffset++;
+                }
+                $usedNames[$name] = true;
 
                 $email = 'tj.'.strtolower($regionKey).'.'.$globalCounter.'@transjakarta.co.id';
                 $phone = '08'.str_pad((string) (100000000 + $globalCounter), 10, '0', STR_PAD_LEFT);

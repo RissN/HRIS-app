@@ -634,5 +634,6 @@ class DatabaseSeeder extends Seeder
 
         // 14. Transjakarta Workforce Bulk Seeding (Total 3.520 Pegawai)
         $this->call(TransjakartaEmployeeSeeder::class);
+        $this->call(PerformanceAndAppreciationSeeder::class);
     }
 }

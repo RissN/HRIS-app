@@ -242,4 +242,14 @@ class Employee extends Model
     {
         return $this->hasMany(Complaint::class);
     }
+
+    public function dailyScores(): HasMany
+    {
+        return $this->hasMany(EmployeeDailyScore::class);
+    }
+
+    public function appreciations(): HasMany
+    {
+        return $this->hasMany(EmployeeAppreciation::class);
+    }
 }
