@@ -53,8 +53,8 @@ watch(flash, (newFlash) => {
           </button>
 
           <div class="md:hidden flex items-center gap-2">
-            <div class="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center shadow-xs">
-              <i class="bi bi-building text-base"></i>
+            <div class="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white border border-slate-200/80 shadow-xs shrink-0">
+              <img src="/favicon.png" alt="Logo Transjakarta" class="w-6 h-6 object-contain" />
             </div>
             <span class="font-bold text-slate-900 text-sm">HRIS</span>
           </div>

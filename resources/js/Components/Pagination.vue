@@ -9,13 +9,17 @@ defineProps({
   from: Number,
   to: Number,
   total: Number,
+  label: {
+    type: String,
+    default: 'pegawai',
+  },
 });
 </script>
 
 <template>
   <div v-if="links && links.length > 3" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
     <div class="text-xs text-slate-500">
-      Menampilkan <span class="font-semibold text-slate-800">{{ from || 0 }}</span> - <span class="font-semibold text-slate-800">{{ to || 0 }}</span> dari <span class="font-semibold text-slate-900">{{ total || 0 }}</span> pegawai
+      Menampilkan <span class="font-semibold text-slate-800">{{ from || 0 }}</span> - <span class="font-semibold text-slate-800">{{ to || 0 }}</span> dari <span class="font-semibold text-slate-900">{{ total || 0 }}</span> {{ label }}
     </div>
 
     <div class="flex flex-wrap items-center gap-1">

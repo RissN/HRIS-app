@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Traits\LogsActivity;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,6 +13,8 @@ use Inertia\Response;
 
 class AttendanceController extends Controller
 {
+    use LogsActivity;
+
     public function index(Request $request): Response
     {
         $date = $request->input('date', Carbon::today()->toDateString());
@@ -31,6 +34,7 @@ class AttendanceController extends Controller
         }
 
         if ($search) {
+            $search = str_replace(['%', '_'], ['\%', '\_'], $search);
             $query->whereHas('employee', function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
                     $sub->where('employee_code', 'like', "%{$search}%")
@@ -66,6 +70,8 @@ class AttendanceController extends Controller
         ]);
 
         $attendance->update($validated);
+
+        $this->logActivity('updated', "Koreksi data absensi #{$attendance->id}", $attendance, $validated);
 
         return back()->with('success', 'Data absensi berhasil diperbarui!');
     }

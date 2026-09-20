@@ -7,12 +7,15 @@ use App\Models\Attendance;
 use App\Models\Complaint;
 use App\Models\Employee;
 use App\Models\Notification;
+use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ComplaintController extends Controller
 {
+    use LogsActivity;
+
     public function index(Request $request): Response
     {
         $status = $request->input('status', 'all');
@@ -139,6 +142,8 @@ class ComplaintController extends Controller
             ]);
         }
 
+        $this->logActivity('resolved', "Menyelesaikan komplain {$complaint->employee?->user?->name}", $complaint);
+
         return back()->with('success', 'Komplain absensi telah diselesaikan dan direspon.');
     }
 
@@ -170,6 +175,8 @@ class ComplaintController extends Controller
                 'is_read' => false,
             ]);
         }
+
+        $this->logActivity('rejected', "Menolak komplain {$complaint->employee?->user?->name}", $complaint);
 
         return back()->with('success', 'Komplain absensi ditolak dengan alasan.');
     }

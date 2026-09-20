@@ -115,6 +115,7 @@ const getStatusBadge = (status) => {
               :src="summary.employee.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(summary.employee.name) + '&background=2563eb&color=fff'"
               class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover ring-2 ring-slate-100 shrink-0 shadow-xs"
               alt="Avatar"
+              @error="$event.target.src = 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 fill=%22%232563eb%22 rx=%2216%22/><text x=%2250%25%22 y=%2254%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2226%22 font-weight=%22bold%22 font-family=%22sans-serif%22>' + (summary.employee.name ? summary.employee.name.charAt(0).toUpperCase() : 'U') + '</text></svg>'"
             />
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2 mb-1">

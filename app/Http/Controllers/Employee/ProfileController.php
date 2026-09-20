@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Employee;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -84,6 +85,12 @@ class ProfileController extends Controller
         $request->validate([
             'avatar' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
+
+        // Delete old avatar file to prevent orphan file accumulation
+        if ($employee->avatar) {
+            $oldPath = str_replace('/storage/', '', $employee->avatar);
+            Storage::disk('public')->delete($oldPath);
+        }
 
         $file = $request->file('avatar');
         $fileName = 'avatar_'.$employee->id.'_'.time().'.'.$file->getClientOriginalExtension();

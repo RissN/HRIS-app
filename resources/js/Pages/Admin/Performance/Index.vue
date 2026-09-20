@@ -296,6 +296,7 @@ const getSourceBadge = (source) => {
                   class="w-14 h-14 rounded-2xl object-cover ring-2"
                   :class="cand.rank === 1 ? 'ring-amber-400' : 'ring-slate-200'"
                   alt="Avatar"
+                  @error="$event.target.src = 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2256%22 height=%2256%22 viewBox=%220 0 56 56%22><rect width=%2256%22 height=%2256%22 fill=%22%232563eb%22 rx=%2216%22/><text x=%2250%25%22 y=%2254%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2222%22 font-weight=%22bold%22 font-family=%22sans-serif%22>' + (cand.user?.name ? cand.user.name.charAt(0).toUpperCase() : 'U') + '</text></svg>'"
                 />
                 <span
                   v-if="cand.rank === 1"
@@ -410,6 +411,7 @@ const getSourceBadge = (source) => {
                       :src="cand.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(cand.user?.name || 'User') + '&background=2563eb&color=fff'"
                       class="w-8 h-8 rounded-xl object-cover ring-1 ring-slate-200 shrink-0"
                       alt="Avatar"
+                      @error="$event.target.src = 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 fill=%22%232563eb%22 rx=%2210%22/><text x=%2250%25%22 y=%2254%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2214%22 font-weight=%22bold%22 font-family=%22sans-serif%22>' + (cand.user?.name ? cand.user.name.charAt(0).toUpperCase() : 'U') + '</text></svg>'"
                     />
                     <div class="min-w-0">
                       <div class="font-bold text-slate-900 text-xs sm:text-sm group-hover:text-blue-600 transition-colors truncate">

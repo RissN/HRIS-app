@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\Notification;
 use App\Models\Payroll;
 use App\Models\Setting;
+use App\Traits\LogsActivity;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,21 +17,53 @@ use Inertia\Response;
 
 class PayrollController extends Controller
 {
+    use LogsActivity;
+
     public function index(Request $request): Response
     {
         $month = $request->input('month', Carbon::now()->format('Y-m'));
+        $search = $request->input('search');
+        $status = $request->input('status', 'all');
+        $department = $request->input('department', 'all');
 
-        $payrolls = Payroll::with(['employee.user'])
-            ->where('month', $month)
-            ->orderBy('net_salary', 'desc')
-            ->get();
+        $baseMonthQuery = Payroll::where('month', $month);
 
         $stats = [
-            'total_expenditure' => $payrolls->sum('net_salary'),
-            'total_employees' => $payrolls->count(),
-            'paid_count' => $payrolls->where('status', 'paid')->count(),
-            'draft_count' => $payrolls->where('status', 'draft')->count(),
+            'total_expenditure' => (clone $baseMonthQuery)->sum('net_salary'),
+            'total_employees' => (clone $baseMonthQuery)->count(),
+            'paid_count' => (clone $baseMonthQuery)->where('status', 'paid')->count(),
+            'draft_count' => (clone $baseMonthQuery)->where('status', 'draft')->count(),
         ];
+
+        $query = Payroll::with(['employee.user'])
+            ->where('month', $month);
+
+        if ($status && $status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        if ($department && $department !== 'all') {
+            $query->whereHas('employee', function ($q) use ($department) {
+                $q->where('department', $department);
+            });
+        }
+
+        if ($search) {
+            $search = str_replace(['%', '_'], ['\%', '\_'], $search);
+            $query->whereHas('employee', function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('employee_code', 'like', "%{$search}%")
+                        ->orWhere('position', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($uq) use ($search) {
+                            $uq->where('name', 'like', "%{$search}%");
+                        });
+                });
+            });
+        }
+
+        $payrolls = $query->orderBy('net_salary', 'desc')
+            ->paginate(15)
+            ->withQueryString();
 
         // Unique months available in payrolls
         $availableMonths = Payroll::select('month')->distinct()->orderBy('month', 'desc')->pluck('month');
@@ -38,11 +71,20 @@ class PayrollController extends Controller
             $availableMonths->prepend($month);
         }
 
+        $departments = Employee::select('department')->distinct()->whereNotNull('department')->pluck('department');
+
         return Inertia::render('Admin/Payroll/Index', [
             'payrolls' => $payrolls,
             'stats' => $stats,
             'month' => $month,
             'availableMonths' => $availableMonths,
+            'departments' => $departments,
+            'filters' => [
+                'month' => $month,
+                'search' => $search,
+                'status' => $status,
+                'department' => $department,
+            ],
             'flash' => [
                 'success' => session('success'),
                 'error' => session('error'),
@@ -113,6 +155,8 @@ class PayrollController extends Controller
             $generatedCount++;
         }
 
+        $this->logActivity('generated', "Generate payroll {$generatedCount} pegawai untuk {$month}");
+
         return redirect()->back()->with('success', "Berhasil mengkalkulasi estimasi gaji {$generatedCount} pegawai untuk periode {$month}.");
     }
 
@@ -134,6 +178,8 @@ class PayrollController extends Controller
                 'is_read' => false,
             ]);
         }
+
+        $this->logActivity('paid', "Menandai gaji LUNAS: {$payroll->employee?->user?->name} ({$payroll->month})", $payroll);
 
         return redirect()->back()->with('success', "Gaji {$payroll->employee?->user?->name} periode {$payroll->month} berhasil ditandai LUNAS.");
     }

@@ -15,14 +15,19 @@ const currentRoute = computed(() => page.url);
 const isUrlActive = (path) => {
   return currentRoute.value.startsWith(path);
 };
+
+const onAvatarError = (e) => {
+  const initial = (user.value?.name || 'U').charAt(0).toUpperCase();
+  e.target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="%232563eb" rx="20"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="16" font-weight="bold" font-family="sans-serif">${initial}</text></svg>`;
+};
 </script>
 
 <template>
   <aside class="fixed top-0 bottom-0 left-0 w-64 bg-white border-r border-slate-200/80 hidden md:flex flex-col z-30">
     <!-- Brand -->
     <div class="h-16 px-5 border-b border-slate-100 flex items-center gap-3">
-      <div class="w-9 h-9 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-500/20 flex items-center justify-center">
-        <i class="bi bi-building text-lg"></i>
+      <div class="w-9 h-9 rounded-xl overflow-hidden shadow-xs flex items-center justify-center bg-white border border-slate-100 shrink-0">
+        <img src="/favicon.png" alt="Logo Transjakarta" class="w-7 h-7 object-contain" />
       </div>
       <div>
         <div class="font-bold text-slate-900 leading-none">HRIS</div>
@@ -38,6 +43,7 @@ const isUrlActive = (path) => {
             :src="user?.employee?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user?.name || 'User') + '&background=2563eb&color=fff'" 
             alt="Avatar" 
             class="w-10 h-10 rounded-full object-cover ring-2 ring-white"
+            @error="onAvatarError"
           />
           <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 ring-2 ring-white rounded-full"></span>
         </div>

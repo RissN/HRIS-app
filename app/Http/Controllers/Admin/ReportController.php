@@ -22,19 +22,22 @@ class ReportController extends Controller
 
         $query = $this->buildFilteredQuery($month, $department, $status, $search);
 
-        // Calculate summary statistics
-        $statsQuery = clone $query;
-        $allMatching = $statsQuery->get();
+        // Calculate summary statistics using aggregate queries (avoids loading all records into memory)
+        $statusCounts = (clone $query)
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
 
         $stats = [
-            'total' => $allMatching->count(),
-            'present' => $allMatching->where('status', 'present')->count(),
-            'late' => $allMatching->where('status', 'late')->count(),
-            'sick' => $allMatching->where('status', 'sick')->count(),
-            'permission' => $allMatching->where('status', 'permission')->count(),
-            'absent' => $allMatching->where('status', 'absent')->count(),
-            'wfh' => $allMatching->where('status', 'wfh')->count(),
-            'total_late_minutes' => $allMatching->sum('late_minutes'),
+            'total' => array_sum($statusCounts),
+            'present' => $statusCounts['present'] ?? 0,
+            'late' => $statusCounts['late'] ?? 0,
+            'sick' => $statusCounts['sick'] ?? 0,
+            'permission' => $statusCounts['permission'] ?? 0,
+            'absent' => $statusCounts['absent'] ?? 0,
+            'wfh' => $statusCounts['wfh'] ?? 0,
+            'total_late_minutes' => (int) (clone $query)->sum('late_minutes'),
         ];
 
         // Paginated records for table view
@@ -150,6 +153,7 @@ class ReportController extends Controller
         }
 
         if ($search) {
+            $search = str_replace(['%', '_'], ['\%', '\_'], $search);
             $query->whereHas('employee', function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
                     $sub->where('employee_code', 'like', "%{$search}%")

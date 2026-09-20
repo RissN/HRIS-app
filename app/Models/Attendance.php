@@ -21,6 +21,7 @@ class Attendance extends Model
         'check_out_lat',
         'check_out_lng',
         'status',
+        'late_minutes',
         'note',
         'photo_path',
     ];
@@ -35,6 +36,7 @@ class Attendance extends Model
             'check_in_lng' => 'float',
             'check_out_lat' => 'float',
             'check_out_lng' => 'float',
+            'late_minutes' => 'integer',
         ];
     }
 

@@ -11,9 +11,11 @@ class NotificationController extends Controller
 {
     public function markAsRead(Request $request, Notification $notification): JsonResponse|RedirectResponse
     {
-        if ($notification->user_id === $request->user()->id) {
-            $notification->update(['is_read' => true]);
+        if ($notification->user_id !== $request->user()->id) {
+            abort(403, 'Akses ditolak.');
         }
+
+        $notification->update(['is_read' => true]);
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true]);

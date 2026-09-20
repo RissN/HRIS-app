@@ -1,14 +1,26 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import EmployeeLayout from '@/Layouts/EmployeeLayout.vue';
+import Pagination from '@/Components/Pagination.vue';
 
 const props = defineProps({
-  payrolls: Array,
+  payrolls: [Object, Array],
   employee: Object,
 });
 
-const activePayslip = ref(props.payrolls.length > 0 ? props.payrolls[0] : null);
+const payrollList = computed(() => {
+  if (Array.isArray(props.payrolls)) return props.payrolls;
+  return props.payrolls?.data || [];
+});
+
+const activePayslip = ref(payrollList.value.length > 0 ? payrollList.value[0] : null);
+
+watch(payrollList, (newList) => {
+  if (newList.length > 0 && (!activePayslip.value || !newList.some(p => p.id === activePayslip.value.id))) {
+    activePayslip.value = newList[0];
+  }
+});
 
 const selectPayslip = (p) => {
   activePayslip.value = p;
@@ -67,7 +79,7 @@ const formatDate = (dateStr) => {
         </div>
       </div>
 
-      <div v-if="payrolls.length === 0" class="bg-white rounded-3xl border border-slate-100 p-12 text-center text-slate-400">
+      <div v-if="payrollList.length === 0" class="bg-white rounded-3xl border border-slate-100 p-12 text-center text-slate-400">
         <i class="bi bi-wallet-fill text-4xl mb-3 block text-slate-300"></i>
         <p class="text-base font-semibold text-slate-600">Belum Ada Slip Gaji</p>
         <p class="text-xs text-slate-400 mt-1">Slip gaji Anda akan ditampilkan di sini setelah diproses oleh bagian HRD.</p>
@@ -159,7 +171,7 @@ const formatDate = (dateStr) => {
             <h3 class="font-bold text-slate-900 text-sm mb-3">Daftar Periode Tersedia</h3>
             <div class="space-y-2.5">
               <div
-                v-for="p in payrolls"
+                v-for="p in payrollList"
                 :key="p.id"
                 @click="selectPayslip(p)"
                 class="p-3.5 rounded-2xl border transition cursor-pointer flex items-center justify-between"
@@ -185,6 +197,17 @@ const formatDate = (dateStr) => {
                 </div>
               </div>
             </div>
+
+            <!-- Pagination -->
+            <Pagination
+              v-if="payrolls?.links"
+              :links="payrolls.links"
+              :from="payrolls.from"
+              :to="payrolls.to"
+              :total="payrolls.total"
+              label="periode"
+              class="mt-3"
+            />
           </div>
         </div>
       </div>

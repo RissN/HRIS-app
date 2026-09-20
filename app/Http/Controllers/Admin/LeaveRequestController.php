@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Models\Notification;
+use App\Traits\LogsActivity;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,6 +15,8 @@ use Inertia\Response;
 
 class LeaveRequestController extends Controller
 {
+    use LogsActivity;
+
     public function index(Request $request): Response
     {
         $status = $request->input('status', 'all');
@@ -122,6 +125,8 @@ class LeaveRequestController extends Controller
             ]);
         }
 
+        $this->logActivity('approved', "Menyetujui cuti {$leaveRequest->employee?->user?->name}", $leaveRequest);
+
         return back()->with('success', 'Pengajuan cuti/izin/sakit berhasil disetujui dan data absensi telah disinkronkan.');
     }
 
@@ -153,6 +158,8 @@ class LeaveRequestController extends Controller
                 'is_read' => false,
             ]);
         }
+
+        $this->logActivity('rejected', "Menolak cuti {$leaveRequest->employee?->user?->name}: {$validated['reject_reason']}", $leaveRequest);
 
         return back()->with('success', 'Pengajuan cuti/izin/sakit telah ditolak dengan catatan.');
     }

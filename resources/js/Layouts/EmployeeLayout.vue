@@ -18,6 +18,11 @@ const dismissFlash = () => {
   showFlashError.value = false;
 };
 
+const onAvatarError = (e) => {
+  const initial = (user.value?.name || 'U').charAt(0).toUpperCase();
+  e.target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" fill="%232563eb" rx="16"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="14" font-weight="bold" font-family="sans-serif">${initial}</text></svg>`;
+};
+
 watch(flash, (newFlash) => {
   if (flashTimer) clearTimeout(flashTimer);
   showFlashSuccess.value = !!newFlash.success;
@@ -36,8 +41,8 @@ watch(flash, (newFlash) => {
     <!-- Mobile Top Header Bar -->
     <header class="md:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3 flex items-center justify-between shadow-xs">
       <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center shadow-xs">
-          <i class="bi bi-clock-history text-base"></i>
+        <div class="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white border border-slate-200/80 shadow-xs shrink-0">
+          <img src="/favicon.png" alt="Logo Transjakarta" class="w-6 h-6 object-contain" />
         </div>
         <div>
           <div class="font-bold text-slate-900 text-sm leading-tight">HRIS</div>
@@ -52,6 +57,7 @@ watch(flash, (newFlash) => {
             :src="user?.employee?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user?.name || 'User') + '&background=2563eb&color=fff'" 
             class="w-8 h-8 rounded-full object-cover ring-2 ring-blue-600/20" 
             alt="Avatar"
+            @error="onAvatarError"
           />
         </Link>
       </div>

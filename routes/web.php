@@ -92,7 +92,7 @@ Route::middleware(['auth'])->group(function () {
 // ==========================================
 // ADMIN ROUTES (Role: Admin/HR)
 // ==========================================
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin', 'throttle:60,1'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 

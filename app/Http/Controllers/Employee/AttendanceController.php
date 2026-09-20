@@ -12,6 +12,7 @@ use App\Services\PerformanceScoringService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -86,11 +87,16 @@ class AttendanceController extends Controller
 
         $validated = $request->validate([
             'status' => 'required|in:present,wfh,permission,sick',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
             'note' => 'nullable|string|max:500',
-            'photo' => 'nullable|string', // base64 data url from camera capture
+            'photo' => 'nullable|string|max:4194304', // base64 ~3MB image = ~4MB encoded
         ]);
+
+        // Selfie photo is mandatory for on-site 'present' check-in to deter GPS spoofing
+        if ($validated['status'] === 'present' && empty($validated['photo'])) {
+            return back()->with('error', 'Foto selfie wajib diambil untuk absensi hadir di kantor.');
+        }
 
         $status = $validated['status'];
         $lat = (float) $validated['latitude'];
@@ -110,11 +116,16 @@ class AttendanceController extends Controller
             $status = AttendanceService::determineStatus(now(), $schedule);
         }
 
-        // Save selfie photo if provided
+        // Save selfie photo if provided — with content validation
         $photoPath = null;
         if (! empty($validated['photo']) && str_contains($validated['photo'], 'data:image')) {
             $imageData = $validated['photo'];
             $imageParts = explode(';base64,', $imageData);
+
+            if (count($imageParts) < 2 || empty($imageParts[1])) {
+                return back()->with('error', 'Format foto tidak valid.');
+            }
+
             $imageTypeAux = explode('image/', $imageParts[0]);
             $imageType = $imageTypeAux[1] ?? 'jpg';
 
@@ -124,12 +135,30 @@ class AttendanceController extends Controller
                 $imageType = 'jpg';
             }
 
-            $imageBase64 = base64_decode($imageParts[1]);
+            $imageBase64 = base64_decode($imageParts[1], true);
+            if ($imageBase64 === false) {
+                return back()->with('error', 'Gagal memproses data foto.');
+            }
+
+            // Validate actual image content via magic bytes
+            $imageInfo = @getimagesizefromstring($imageBase64);
+            if ($imageInfo === false || ! in_array($imageInfo[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP])) {
+                return back()->with('error', 'File yang diunggah bukan gambar yang valid.');
+            }
 
             $fileName = 'selfies/'.$employee->id.'_'.time().'.'.$imageType;
             Storage::disk('public')->put($fileName, $imageBase64);
             $photoPath = '/storage/'.$fileName;
         }
+
+        // Append device fingerprint to note for anti-spoofing audit trail
+        $deviceNote = $validated['note'] ?? '';
+        $deviceFingerprint = sprintf(
+            '[Device: %s | IP: %s]',
+            Str::limit($request->userAgent(), 120),
+            $request->ip()
+        );
+        $deviceNote = $deviceNote ? ($deviceNote.' '.$deviceFingerprint) : $deviceFingerprint;
 
         $attendance = Attendance::updateOrCreate(
             [
@@ -141,7 +170,7 @@ class AttendanceController extends Controller
                 'check_in_lat' => $lat,
                 'check_in_lng' => $lng,
                 'status' => $status,
-                'note' => $validated['note'] ?? null,
+                'note' => $deviceNote,
                 'photo_path' => $photoPath,
             ]
         );
@@ -175,8 +204,8 @@ class AttendanceController extends Controller
         }
 
         $validated = $request->validate([
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
             'note' => 'nullable|string|max:500',
         ]);
 

@@ -65,6 +65,8 @@ class PerformanceScoringService
 
         $totalScore = $attendanceScore + $appreciationScore;
 
+        $attendance->updateQuietly(['late_minutes' => $lateMinutes]);
+
         return EmployeeDailyScore::updateOrCreate(
             [
                 'employee_id' => $attendance->employee_id,

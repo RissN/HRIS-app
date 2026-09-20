@@ -1,18 +1,29 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import Pagination from '@/Components/Pagination.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
 const props = defineProps({
-  payrolls: Array,
+  payrolls: [Object, Array],
   stats: Object,
   month: String,
   availableMonths: Array,
+  departments: Array,
+  filters: Object,
   flash: Object,
 });
 
 const selectedMonth = ref(props.month || new Date().toISOString().slice(0, 7));
-import ConfirmModal from '@/Components/ConfirmModal.vue';
+const search = ref(props.filters?.search || '');
+const filterStatus = ref(props.filters?.status || 'all');
+const filterDept = ref(props.filters?.department || 'all');
+
+const payrollList = computed(() => {
+  if (Array.isArray(props.payrolls)) return props.payrolls;
+  return props.payrolls?.data || [];
+});
 
 const isGenerating = ref(false);
 const isPaying = ref(false);
@@ -22,10 +33,26 @@ const showGenerateModal = ref(false);
 const showPaidModal = ref(false);
 const payrollToPay = ref(null);
 
-const changeMonth = () => {
+const applyFilter = () => {
+  router.get(route('admin.payroll.index'), {
+    month: selectedMonth.value,
+    search: search.value || undefined,
+    status: filterStatus.value !== 'all' ? filterStatus.value : undefined,
+    department: filterDept.value !== 'all' ? filterDept.value : undefined,
+  }, { preserveState: true, replace: true });
+};
+
+const resetFilter = () => {
+  search.value = '';
+  filterStatus.value = 'all';
+  filterDept.value = 'all';
   router.get(route('admin.payroll.index'), {
     month: selectedMonth.value,
   }, { preserveState: true });
+};
+
+const changeMonth = () => {
+  applyFilter();
 };
 
 const openGenerateModal = () => {
@@ -187,12 +214,75 @@ const formatMonthName = (monthStr) => {
         </div>
       </div>
 
+      <!-- Filters & Search Bar -->
+      <div class="bg-white rounded-3xl border border-slate-100 p-4 sm:p-5 shadow-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+          <div class="sm:col-span-5">
+            <div class="relative">
+              <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input
+                v-model="search"
+                type="text"
+                class="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                placeholder="Cari nama, NIK, atau jabatan pegawai..."
+                @keyup.enter="applyFilter"
+              />
+            </div>
+          </div>
+
+          <div class="sm:col-span-3">
+            <select
+              v-model="filterDept"
+              class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+              @change="applyFilter"
+            >
+              <option value="all">Semua Departemen</option>
+              <option v-for="d in departments" :key="d" :value="d">{{ d }}</option>
+            </select>
+          </div>
+
+          <div class="sm:col-span-2">
+            <select
+              v-model="filterStatus"
+              class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+              @change="applyFilter"
+            >
+              <option value="all">Semua Status</option>
+              <option value="paid">LUNAS</option>
+              <option value="draft">DRAFT</option>
+            </select>
+          </div>
+
+          <div class="sm:col-span-2 flex items-center gap-2">
+            <button
+              type="button"
+              @click="applyFilter"
+              class="flex-1 px-3 py-2 text-xs font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition shadow-xs cursor-pointer"
+            >
+              Filter
+            </button>
+            <button
+              v-if="search || filterStatus !== 'all' || filterDept !== 'all'"
+              type="button"
+              @click="resetFilter"
+              class="px-2.5 py-2 text-xs rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-100 transition cursor-pointer"
+              title="Reset Filter"
+            >
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Payroll Table -->
       <div class="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-xs">
-        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+        <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h2 class="font-bold text-slate-900 text-base">Daftar Payroll Periode {{ formatMonthName(selectedMonth) }}</h2>
             <p class="text-xs text-slate-500 mt-0.5">Rincian gaji pokok, tunjangan kehadiran, dan potongan</p>
+          </div>
+          <div class="text-xs text-slate-400 font-medium">
+            Total Data: <strong class="text-slate-800">{{ (payrolls?.total ?? payrollList.length).toLocaleString('id-ID') }}</strong> Pegawai
           </div>
         </div>
 
@@ -210,15 +300,15 @@ const formatMonthName = (monthStr) => {
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr v-if="payrolls.length === 0">
+              <tr v-if="payrollList.length === 0">
                 <td colspan="7" class="py-12 text-center text-slate-400">
                   <i class="bi bi-wallet2 text-3xl mb-2 block text-slate-300"></i>
                   Belum ada data payroll untuk periode {{ selectedMonth }}.
                   <div class="mt-2">
                     <button
                       type="button"
-                      @click="generatePayroll"
-                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 text-xs font-semibold hover:bg-blue-100 transition"
+                      @click="openGenerateModal"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 text-xs font-semibold hover:bg-blue-100 transition cursor-pointer"
                     >
                       <i class="bi bi-calculator"></i>
                       <span>Hitung Payroll Sekarang</span>
@@ -227,7 +317,7 @@ const formatMonthName = (monthStr) => {
                 </td>
               </tr>
               <tr
-                v-for="p in payrolls"
+                v-for="p in payrollList"
                 :key="p.id"
                 class="hover:bg-slate-50/60 transition-colors"
               >
@@ -290,6 +380,17 @@ const formatMonthName = (monthStr) => {
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div v-if="payrolls?.links" class="p-4 sm:p-5 border-t border-slate-100 bg-slate-50/40">
+          <Pagination
+            :links="payrolls.links"
+            :from="payrolls.from"
+            :to="payrolls.to"
+            :total="payrolls.total"
+            label="pegawai"
+          />
         </div>
       </div>
     </div>

@@ -34,6 +34,11 @@ const handleFileChange = (e) => {
     });
   }
 };
+
+const onAvatarError = (e) => {
+  const initial = (props.userName || 'U').charAt(0).toUpperCase();
+  e.target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="%232563eb" rx="40"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="32" font-weight="bold" font-family="sans-serif">${initial}</text></svg>`;
+};
 </script>
 
 <template>
@@ -43,6 +48,7 @@ const handleFileChange = (e) => {
         :src="previewUrl || currentAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userName) + '&background=2563eb&color=fff'" 
         alt="Profile Avatar" 
         class="w-20 h-20 rounded-full object-cover ring-4 ring-blue-50 shadow-sm"
+        @error="onAvatarError"
       />
       <button 
         type="button" 

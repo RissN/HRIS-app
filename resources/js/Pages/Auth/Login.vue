@@ -61,11 +61,15 @@ const fillDemo = (role) => {
     <div class="w-full max-w-md">
       <!-- Logo & Header -->
       <div class="text-center mb-6">
-        <div class="inline-flex w-14 h-14 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-500/25 items-center justify-center mb-3">
-          <i class="bi bi-building text-2xl"></i>
+        <div class="inline-flex items-center justify-center mb-3">
+          <img 
+            src="/favicon.png" 
+            alt="Logo Transjakarta" 
+            class="h-20 sm:h-24 w-20 sm:w-24 object-contain drop-shadow-sm" 
+          />
         </div>
         <h1 class="text-2xl font-black text-slate-900 tracking-tight">HRIS</h1>
-        <p class="text-xs text-slate-500 font-medium mt-1">Human Resource Information System</p>
+        <p class="text-xs text-slate-500 font-medium mt-0.5">Sistem Informasi Manajemen SDM Transjakarta</p>
       </div>
 
       <!-- Login Card -->

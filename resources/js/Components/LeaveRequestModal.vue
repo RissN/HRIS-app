@@ -66,6 +66,7 @@ const formatDateTime = (dtStr) => {
               :src="request.employee.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(request.employee.user.name) + '&background=2563eb&color=fff'" 
               class="w-11 h-11 rounded-xl object-cover ring-2 ring-white shadow-xs" 
               alt="Avatar" 
+              @error="$event.target.src = 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2244%22 height=%2244%22 viewBox=%220 0 44 44%22><rect width=%2244%22 height=%2244%22 fill=%22%232563eb%22 rx=%2212%22/><text x=%2250%25%22 y=%2254%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2218%22 font-weight=%22bold%22 font-family=%22sans-serif%22>' + (request.employee.user.name ? request.employee.user.name.charAt(0).toUpperCase() : 'U') + '</text></svg>'"
             />
             <div class="overflow-hidden">
               <div class="font-bold text-slate-900 text-sm truncate">{{ request.employee.user.name }}</div>

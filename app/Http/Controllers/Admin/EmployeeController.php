@@ -8,6 +8,7 @@ use App\Models\EmployeeSchedule;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\WorkSchedule;
+use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -17,6 +18,8 @@ use Spatie\Permission\Models\Role;
 
 class EmployeeController extends Controller
 {
+    use LogsActivity;
+
     public function index(Request $request): Response
     {
         $search = $request->input('search');
@@ -28,6 +31,7 @@ class EmployeeController extends Controller
         $query = Employee::with(['user', 'employeeSchedules.schedule']);
 
         if ($search) {
+            $search = str_replace(['%', '_'], ['\%', '\_'], $search);
             $query->where(function ($q) use ($search) {
                 $q->whereHas('user', function ($sub) use ($search) {
                     $sub->where('name', 'like', "%{$search}%")
@@ -178,6 +182,8 @@ class EmployeeController extends Controller
             'effective_date' => $validated['joined_date'],
         ]);
 
+        $this->logActivity('created', "Menambahkan pegawai baru: {$validated['name']}", $employee);
+
         return redirect()->route('admin.employees.index')
             ->with('success', 'Pegawai baru Transjakarta berhasil ditambahkan!');
     }
@@ -279,6 +285,8 @@ class EmployeeController extends Controller
             ]);
         }
 
+        $this->logActivity('updated', "Memperbarui data pegawai: {$validated['name']}", $employee);
+
         return redirect()->route('admin.employees.index')
             ->with('success', 'Data pegawai Transjakarta berhasil diperbarui!');
     }
@@ -289,6 +297,8 @@ class EmployeeController extends Controller
         $user->update(['is_active' => ! $user->is_active]);
 
         $statusText = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+
+        $this->logActivity('toggle_status', "Status pegawai {$user->name} {$statusText}", $employee);
 
         return back()->with('success', "Akun pegawai berhasil {$statusText}.");
     }

@@ -19,7 +19,8 @@ class PayrollController extends Controller
 
         $payrolls = Payroll::where('employee_id', $employee->id)
             ->orderBy('month', 'desc')
-            ->get();
+            ->paginate(6)
+            ->withQueryString();
 
         return Inertia::render('Employee/Payroll/Index', [
             'payrolls' => $payrolls,

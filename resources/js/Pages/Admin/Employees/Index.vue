@@ -69,6 +69,11 @@ const openDetail = (empId) => {
   showDetailModal.value = true;
 };
 
+const onAvatarError = (e, name) => {
+  const initial = (name || 'U').charAt(0).toUpperCase();
+  e.target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="%232563eb" rx="20"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="16" font-weight="bold" font-family="sans-serif">${initial}</text></svg>`;
+};
+
 const getStatusBadgeClass = (status) => {
   switch (status) {
     case 'tetap':
@@ -252,6 +257,7 @@ const getRegionBadgeClass = (reg) => {
                     :src="emp.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(emp.name) + '&background=2563eb&color=fff'" 
                     class="w-10 h-10 rounded-full object-cover ring-2 ring-white" 
                     alt="Avatar"
+                    @error="onAvatarError($event, emp.name)"
                   />
                   <div>
                     <div class="flex items-center gap-1.5 flex-wrap">
@@ -347,6 +353,7 @@ const getRegionBadgeClass = (reg) => {
                         :src="emp.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(emp.name) + '&background=2563eb&color=fff'" 
                         class="w-9 h-9 rounded-full object-cover ring-1 ring-slate-200 shrink-0" 
                         alt="Avatar"
+                        @error="onAvatarError($event, emp.name)"
                       />
                       <div class="cursor-pointer group" @click="openDetail(emp.id)">
                         <div class="flex items-center gap-1.5 flex-wrap">

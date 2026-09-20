@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Traits\LogsActivity;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -11,6 +12,8 @@ use Inertia\Response;
 
 class SettingController extends Controller
 {
+    use LogsActivity;
+
     public function index(): Response
     {
         $settings = [
@@ -48,6 +51,8 @@ class SettingController extends Controller
         foreach ($validated as $key => $value) {
             Setting::set($key, (string) $value);
         }
+
+        $this->logActivity('updated', 'Memperbarui pengaturan sistem HRIS', changes: $validated);
 
         return redirect()->back()->with('success', 'Pengaturan sistem HRIS dan lokasi kantor berhasil diperbarui.');
     }
