@@ -115,7 +115,7 @@ const getRegionBadgeClass = (reg) => {
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
           <div>
             <div class="flex items-center gap-2">
-              <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Manajemen Staf & Pegawai Transjakarta</h1>
+              <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Manajemen Staf & Pegawai</h1>
               <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-blue-600 text-white tracking-wide uppercase">
                 Transjakarta
               </span>

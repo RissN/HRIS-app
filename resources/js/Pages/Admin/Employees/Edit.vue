@@ -121,7 +121,7 @@ const submit = () => {
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <h1 class="text-base font-bold text-slate-900 leading-tight">Ubah Data Pegawai Transjakarta</h1>
+                <h1 class="text-base font-bold text-slate-900 leading-tight">Ubah Data Pegawai</h1>
                 <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-blue-100 text-blue-700 uppercase">
                   Transjakarta
                 </span>
