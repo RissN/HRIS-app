@@ -41,17 +41,6 @@ const submit = () => {
     onFinish: () => form.reset('password'),
   });
 };
-
-const fillDemo = (role) => {
-  form.clearErrors();
-  if (role === 'admin') {
-    form.email = 'admin@absensi.com';
-    form.password = 'password';
-  } else if (role === 'pegawai') {
-    form.email = 'budi@absensi.com';
-    form.password = 'password';
-  }
-};
 </script>
 
 <template>
@@ -162,31 +151,6 @@ const fillDemo = (role) => {
             <i class="bi bi-arrow-right text-base"></i>
           </button>
         </form>
-
-        <!-- Demo Quick Login Helper -->
-        <div class="mt-6 pt-5 border-t border-slate-100">
-          <div class="text-center text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2.5">
-            Akses Cepat Demo:
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button 
-              type="button" 
-              class="py-2 px-3 rounded-xl border border-blue-200 bg-blue-50/50 hover:bg-blue-100/70 text-blue-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-              @click="fillDemo('admin')"
-            >
-              <i class="bi bi-shield-lock text-sm text-blue-600"></i>
-              <span>Admin HR</span>
-            </button>
-            <button 
-              type="button" 
-              class="py-2 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-              @click="fillDemo('pegawai')"
-            >
-              <i class="bi bi-person text-sm text-slate-600"></i>
-              <span>Pegawai</span>
-            </button>
-          </div>
-        </div>
       </div>
 
       <div class="text-center mt-4 text-xs text-slate-400">
